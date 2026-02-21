@@ -1,20 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createAttestation } from '../../utils/dataShapes';
-import { Shield, CheckCircle, Phone, User } from 'lucide-react';
+import { generateHash } from '../../utils/hashVerify';
+import { Shield, CheckCircle, Phone, User, Fingerprint, Lock, ShieldCheck, Mail, Send } from 'lucide-react';
 
 /**
- * AttestationForm — 3 witness verification slots with OTP
- * Props: { assessmentId, onComplete(attestations[]) }
+ * AttestationForm — 3 witness verification slots with OTP and Hash visualization
+ * Props: { assessmentId, baseAssessment, onComplete(attestations[], hash) }
  */
-export default function AttestationForm({ assessmentId, onComplete }) {
+export default function AttestationForm({ assessmentId, baseAssessment = { athleteId: 'tmp', testType: 'tmp', value: 0 }, onComplete }) {
     const [witnesses, setWitnesses] = useState([
-        { name: '', phone: '', otp: '', otpSent: false, verified: false },
-        { name: '', phone: '', otp: '', otpSent: false, verified: false },
-        { name: '', phone: '', otp: '', otpSent: false, verified: false },
+        { id: 1, name: '', phone: '', otp: '', otpSent: false, verified: false, resendTimer: 0 },
+        { id: 2, name: '', phone: '', otp: '', otpSent: false, verified: false, resendTimer: 0 },
+        { id: 3, name: '', phone: '', otp: '', otpSent: false, verified: false, resendTimer: 0 },
     ]);
+
+    const [generatedHash, setGeneratedHash] = useState(null);
+
+    // Timer effect for resend OTP
+    useEffect(() => {
+        const intervals = witnesses.map((w, index) => {
+            if (w.resendTimer > 0) {
+                return setInterval(() => {
+                    setWitnesses(prev => {
+                        const next = [...prev];
+                        next[index].resendTimer -= 1;
+                        return next;
+                    });
+                }, 1000);
+            }
+            return null;
+        });
+
+        return () => {
+            intervals.forEach(int => int && clearInterval(int));
+        };
+    }, [witnesses]);
 
     const verifiedCount = witnesses.filter(w => w.verified).length;
     const allVerified = verifiedCount === 3;
+
+    // Generate hash dynamically upon all verified
+    useEffect(() => {
+        if (allVerified && !generatedHash) {
+            const attestations = witnesses.map(w => ({ witnessPhone: w.phone }));
+            const mockAssessment = { ...baseAssessment, attestations };
+            generateHash(mockAssessment).then(hash => {
+                setGeneratedHash(hash);
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]); // Success pattern
+            });
+        }
+    }, [allVerified, witnesses, baseAssessment, generatedHash]);
 
     const updateWitness = (index, field, value) => {
         setWitnesses(prev => {
@@ -26,7 +61,6 @@ export default function AttestationForm({ assessmentId, onComplete }) {
 
     const handleSendOTP = (index) => {
         const w = witnesses[index];
-        // Validate 10-digit Indian mobile
         const phoneRegex = /^[6-9]\d{9}$/;
         if (!phoneRegex.test(w.phone)) {
             alert('Please enter a valid 10-digit Indian mobile number');
@@ -36,14 +70,16 @@ export default function AttestationForm({ assessmentId, onComplete }) {
             alert('Please enter the witness name');
             return;
         }
+
         updateWitness(index, 'otpSent', true);
-        // Demo: vibration feedback
+        updateWitness(index, 'resendTimer', 30); // 30s resend lock
+
         if (navigator.vibrate) navigator.vibrate(100);
     };
 
     const handleVerifyOTP = (index) => {
         const w = witnesses[index];
-        // Demo: accept any 6-digit OTP
+        // Allow any 6 digit input for demo
         if (w.otp.length === 6 && /^\d{6}$/.test(w.otp)) {
             updateWitness(index, 'verified', true);
             if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
@@ -61,218 +97,237 @@ export default function AttestationForm({ assessmentId, onComplete }) {
                 witnessPhone: w.phone,
                 otpVerified: true,
             }));
-        onComplete(attestations);
+        onComplete(attestations, generatedHash);
     };
 
     return (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in" style={{ paddingBottom: '80px' }}>
             {/* Header */}
-            <div className="flex items-center gap-md mb-lg">
-                <Shield size={24} color="var(--accent-secondary)" />
-                <div>
-                    <h3 className="heading-4">Community Attestation</h3>
-                    <p className="text-muted" style={{ fontSize: '0.8rem' }}>
-                        3 witnesses needed for verification
-                    </p>
+            <div className="text-center mb-xl">
+                <div style={{
+                    width: '80px', height: '80px', margin: '0 auto var(--space-md)',
+                    background: allVerified ? 'var(--accent-success)' : 'var(--bg-glass)',
+                    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: allVerified ? '0 0 30px rgba(16, 185, 129, 0.4)' : 'none',
+                    transition: 'all 0.4s ease'
+                }}>
+                    <Shield size={40} color={allVerified ? '#fff' : 'var(--accent-secondary)'} />
                 </div>
+                <h2 className="heading-2">Community Attestation</h2>
+                <p className="text-secondary">Secure proof via trusted local witnesses</p>
             </div>
 
-            {/* Progress indicator */}
-            <div className="flex justify-center gap-md mb-lg">
-                {[0, 1, 2].map(i => (
-                    <div key={i} className="flex flex-col items-center gap-xs">
-                        <div
-                            className={`animate-scale-in ${witnesses[i].verified ? 'animate-glow' : ''}`}
-                            style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: 'var(--radius-full)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '1.2rem',
-                                fontWeight: 700,
-                                background: witnesses[i].verified
-                                    ? 'var(--accent-success)'
-                                    : 'var(--bg-tertiary)',
-                                color: witnesses[i].verified
-                                    ? 'white'
-                                    : 'var(--text-muted)',
-                                border: witnesses[i].verified
-                                    ? '2px solid var(--accent-success)'
-                                    : '2px solid rgba(255,255,255,0.1)',
-                                transition: 'all var(--transition-normal)',
-                            }}
-                        >
-                            {witnesses[i].verified ? '✓' : i + 1}
-                        </div>
-                        <span className="text-muted" style={{ fontSize: '0.65rem' }}>
-                            Witness {i + 1}
+            {/* Verified Banner */}
+            {allVerified && generatedHash && (
+                <div className="animate-slide-in mb-xl" style={{
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(20, 20, 20, 0.8) 100%)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: 'var(--space-lg)',
+                    textAlign: 'center'
+                }}>
+                    <ShieldCheck size={48} color="var(--accent-success)" style={{ margin: '0 auto var(--space-sm)' }} />
+                    <h3 className="heading-3 mb-sm" style={{ color: 'var(--accent-success)' }}>100% Community Verified</h3>
+
+                    <div style={{
+                        background: 'var(--bg-tertiary)',
+                        padding: 'var(--space-sm) var(--space-md)',
+                        borderRadius: 'var(--radius-md)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-sm)',
+                        marginTop: 'var(--space-sm)',
+                        border: '1px dashed rgba(255,255,255,0.2)'
+                    }}>
+                        <Fingerprint size={16} color="var(--text-muted)" />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            Integrity: <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>{generatedHash.substring(0, 12)}...{generatedHash.substring(generatedHash.length - 4)}</span>
                         </span>
+                        <Lock size={14} color="var(--accent-success)" />
                     </div>
-                ))}
-            </div>
+                </div>
+            )}
 
-            {/* Status badge */}
-            <div className="text-center mb-lg">
-                {allVerified ? (
-                    <div className="badge badge-verified animate-scale-in" style={{ fontSize: '0.85rem', padding: '8px 20px' }}>
-                        <CheckCircle size={16} /> Community Verified ✓
-                    </div>
-                ) : (
-                    <span className="badge badge-pending">
-                        {verifiedCount}/3 Verified
-                    </span>
-                )}
-            </div>
-
-            {/* Witness slots */}
-            <div className="flex flex-col gap-md">
-                {witnesses.map((w, i) => (
-                    <div
-                        key={i}
-                        className="glass-card-static animate-fade-in"
-                        style={{
-                            border: w.verified
-                                ? '1px solid rgba(16, 185, 129, 0.4)'
-                                : '1px solid rgba(255, 255, 255, 0.08)',
-                            background: w.verified
-                                ? 'rgba(16, 185, 129, 0.05)'
-                                : 'var(--bg-card)',
-                            animationDelay: `${i * 0.1}s`,
-                        }}
-                    >
-                        <div className="flex items-center gap-sm mb-md">
-                            <User size={16} color={w.verified ? 'var(--accent-success)' : 'var(--text-muted)'} />
-                            <span className="heading-4" style={{ fontSize: '0.9rem' }}>
+            {/* Progress Dots */}
+            {!allVerified && (
+                <div className="flex justify-center items-center gap-md mb-xl">
+                    {[0, 1, 2].map(i => (
+                        <div key={i} className="flex flex-col items-center gap-xs">
+                            <div
+                                className={`transition-all duration-300 ${witnesses[i].verified ? 'animate-glow' : ''}`}
+                                style={{
+                                    width: '50px', height: '50px', borderRadius: '50%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '1.2rem', fontWeight: 800,
+                                    background: witnesses[i].verified ? 'var(--accent-success)' : 'var(--bg-tertiary)',
+                                    color: witnesses[i].verified ? 'white' : 'var(--text-muted)',
+                                    border: witnesses[i].verified ? '2px solid var(--accent-success)' : '2px solid rgba(255,255,255,0.05)',
+                                    boxShadow: witnesses[i].verified ? '0 0 15px rgba(16, 185, 129, 0.4)' : 'none'
+                                }}
+                            >
+                                {witnesses[i].verified ? <CheckCircle size={24} /> : i + 1}
+                            </div>
+                            <span className="text-secondary" style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
                                 Witness {i + 1}
                             </span>
-                            {w.verified && (
-                                <span className="badge badge-verified" style={{ marginLeft: 'auto', fontSize: '0.6rem' }}>
-                                    VERIFIED ✓
-                                </span>
-                            )}
                         </div>
+                    ))}
+                </div>
+            )}
 
-                        {!w.verified ? (
-                            <>
-                                <div className="form-group">
-                                    <label className="form-label">
-                                        <User size={12} style={{ display: 'inline', marginRight: '4px' }} />
-                                        Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        placeholder="Witness name"
-                                        value={w.name}
-                                        onChange={e => updateWitness(i, 'name', e.target.value)}
-                                        disabled={w.otpSent}
-                                    />
+            {/* Witness Slots */}
+            <div className="flex flex-col gap-lg mb-xl">
+                {witnesses.map((w, i) => {
+                    if (w.verified && !allVerified) {
+                        return (
+                            <div key={i} className="glass-card flex justify-between items-center animate-scale-in" style={{ borderLeft: '4px solid var(--accent-success)', padding: 'var(--space-md) var(--space-lg)' }}>
+                                <div className="flex items-center gap-md">
+                                    <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '10px', borderRadius: '50%' }}>
+                                        <CheckCircle size={20} color="var(--accent-success)" />
+                                    </div>
+                                    <div>
+                                        <h4 className="heading-4" style={{ marginBottom: 0 }}>{w.name}</h4>
+                                        <span className="text-muted" style={{ fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>{w.phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}</span>
+                                    </div>
                                 </div>
-                                <div className="form-group">
-                                    <label className="form-label">
-                                        <Phone size={12} style={{ display: 'inline', marginRight: '4px' }} />
-                                        Phone (10 digits)
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        className="form-input"
-                                        placeholder="9876543210"
-                                        value={w.phone}
-                                        onChange={e => updateWitness(i, 'phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                        inputMode="numeric"
-                                        maxLength={10}
-                                        disabled={w.otpSent}
-                                    />
-                                </div>
+                                <div className="badge badge-verified">Verified</div>
+                            </div>
+                        );
+                    }
 
-                                {!w.otpSent ? (
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={() => handleSendOTP(i)}
-                                        disabled={!w.name.trim() || w.phone.length !== 10}
-                                        style={{ width: '100%' }}
-                                    >
-                                        📲 Send OTP
-                                    </button>
-                                ) : (
-                                    <div className="animate-fade-in">
-                                        <div className="form-group">
-                                            <label className="form-label">Enter 6-digit OTP</label>
+                    if (w.verified) return null; // Hide individual cards if all verifying is done, show banner instead
+
+                    return (
+                        <div
+                            key={i}
+                            className="glass-card-static animate-fade-in"
+                            style={{
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                background: 'var(--bg-glass)',
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--accent-secondary)' }} />
+
+                            <div className="flex justify-between items-center mb-md">
+                                <h4 className="heading-3 flex items-center gap-sm">
+                                    <User size={20} color="var(--accent-secondary)" /> Witness {i + 1}
+                                </h4>
+                                {w.otpSent && <span className="badge badge-pending animate-pulse">Awaiting OTP</span>}
+                            </div>
+
+                            {!w.otpSent ? (
+                                <div className="flex flex-col gap-md">
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <div className="flex items-center" style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', padding: '5px 15px' }}>
+                                            <User size={18} color="var(--text-muted)" />
                                             <input
                                                 type="text"
                                                 className="form-input"
-                                                placeholder="• • • • • •"
-                                                value={w.otp}
-                                                onChange={e => updateWitness(i, 'otp', e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                                inputMode="numeric"
-                                                maxLength={6}
-                                                style={{
-                                                    textAlign: 'center',
-                                                    fontSize: '1.5rem',
-                                                    fontFamily: 'var(--font-mono)',
-                                                    letterSpacing: '0.3em',
-                                                }}
+                                                placeholder="Full Legal Name"
+                                                value={w.name}
+                                                onChange={e => updateWitness(i, 'name', e.target.value)}
+                                                style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}
                                             />
                                         </div>
-                                        <button
-                                            className="btn btn-success"
-                                            onClick={() => handleVerifyOTP(i)}
-                                            disabled={w.otp.length !== 6}
-                                            style={{ width: '100%' }}
-                                        >
-                                            ✓ Verify OTP
-                                        </button>
                                     </div>
-                                )}
-                            </>
-                        ) : (
-                            <div className="text-center animate-scale-in" style={{ padding: 'var(--space-md) 0' }}>
-                                <div style={{ fontSize: '2rem', marginBottom: 'var(--space-xs)' }}>✅</div>
-                                <p style={{ fontWeight: 600, color: 'var(--accent-success)' }}>{w.name}</p>
-                                <p className="text-muted" style={{ fontSize: '0.8rem' }}>
-                                    {w.phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                ))}
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <div className="flex items-center" style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', padding: '5px 15px' }}>
+                                            <Phone size={18} color="var(--text-muted)" />
+                                            <span className="text-secondary" style={{ padding: '0 10px', borderRight: '1px solid rgba(255,255,255,0.1)' }}>+91</span>
+                                            <input
+                                                type="tel"
+                                                className="form-input"
+                                                placeholder="Mobile Number"
+                                                value={w.phone}
+                                                onChange={e => updateWitness(i, 'phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                                inputMode="numeric"
+                                                maxLength={10}
+                                                style={{ border: 'none', background: 'transparent', boxShadow: 'none', fontFamily: 'var(--font-mono)' }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        className="btn btn-secondary mt-sm hover-lift"
+                                        onClick={() => handleSendOTP(i)}
+                                        disabled={!w.name.trim() || w.phone.length !== 10}
+                                        style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px' }}
+                                    >
+                                        <Send size={18} /> Request OTP Verification
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-md animate-fade-in text-center p-md" style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)' }}>
+                                    <Mail size={32} color="var(--accent-primary)" style={{ margin: '0 auto' }} />
+                                    <p className="text-secondary" style={{ fontSize: '0.9rem' }}>
+                                        6-digit code sent to <strong style={{ color: 'white' }}>+91 {w.phone.slice(0, 3)} {w.phone.slice(3, 6)} {w.phone.slice(6)}</strong>
+                                    </p>
+
+                                    <div className="flex justify-center gap-xs my-sm">
+                                        {/* Simulated 6 box inputs */}
+                                        <input
+                                            type="text"
+                                            value={w.otp}
+                                            onChange={e => updateWitness(i, 'otp', e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                            inputMode="numeric"
+                                            autoFocus
+                                            placeholder="------"
+                                            style={{
+                                                width: '180px', height: '60px',
+                                                background: 'var(--bg-tertiary)', border: '2px solid var(--accent-primary)', borderRadius: 'var(--radius-md)',
+                                                color: 'white', fontSize: '2rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.4em', textAlign: 'center',
+                                                boxShadow: '0 0 15px rgba(99, 102, 241, 0.2)'
+                                            }}
+                                        />
+                                    </div>
+
+                                    <button
+                                        className="btn btn-primary btn-lg hover-scale mt-sm"
+                                        onClick={() => handleVerifyOTP(i)}
+                                        disabled={w.otp.length !== 6}
+                                        style={{ width: '100%' }}
+                                    >
+                                        Verify Witness {i + 1}
+                                    </button>
+
+                                    <div className="text-muted mt-sm" style={{ fontSize: '0.8rem' }}>
+                                        {w.resendTimer > 0
+                                            ? `Resend SMS in 00:${String(w.resendTimer).padStart(2, '0')}`
+                                            : <button onClick={() => updateWitness(i, 'resendTimer', 30)} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontWeight: 600 }}>Resend code</button>
+                                        }
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
-            {/* Complete Button */}
-            {allVerified && (
-                <div className="mt-lg animate-slide-up">
+            {/* Action Buttons */}
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: 'var(--space-md)', background: 'linear-gradient(0deg, var(--bg-card) 0%, transparent 100%)', zIndex: 100 }}>
+                {allVerified ? (
                     <button
-                        className="btn btn-success btn-lg"
+                        className="btn btn-success btn-lg animate-slide-up"
                         onClick={handleComplete}
-                        style={{
-                            width: '100%',
-                            boxShadow: '0 0 30px rgba(16, 185, 129, 0.3)',
-                        }}
+                        style={{ width: '100%', maxWidth: '600px', margin: '0 auto', display: 'flex', justifyContent: 'center', boxShadow: '0 10px 30px rgba(16,185,129,0.4)', borderRadius: 'var(--radius-full)' }}
                     >
-                        <CheckCircle size={20} />
-                        Complete Attestation — All 3 Verified ✓
+                        <ShieldCheck size={20} style={{ marginRight: '8px' }} />
+                        Finalize & Lock Assessment Data
                     </button>
-                </div>
-            )}
-
-            {/* Skip option */}
-            {!allVerified && (
-                <div className="text-center mt-lg">
+                ) : (
                     <button
                         className="btn btn-ghost"
                         onClick={() => onComplete(witnesses.filter(w => w.verified).map(w => createAttestation({
-                            assessmentId,
-                            witnessName: w.name,
-                            witnessPhone: w.phone,
-                            otpVerified: true,
-                        })))}
+                            assessmentId, witnessName: w.name, witnessPhone: w.phone, otpVerified: true,
+                        })), null)}
+                        style={{ width: '100%', maxWidth: '600px', margin: '0 auto', display: 'block' }}
                     >
-                        Skip — Continue with {verifiedCount}/3 witnesses
+                        Skip Remaining (Warning: Lowers Trust Score)
                     </button>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }

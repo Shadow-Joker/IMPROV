@@ -6,7 +6,8 @@
 /**
  * Known performance ranges for anomaly detection
  * Format: { [testType]: { min, max, mean, stdDev } }
- * Based on average grassroots athlete data for U-14/U-16
+ * Based on average grassroots athlete data for U-14/U-16.
+ * Limits are specifically tailored to prevent "impossible human limits" data entry typos.
  */
 const PERFORMANCE_RANGES = {
     // SAI Tests
@@ -39,72 +40,75 @@ const PERFORMANCE_RANGES = {
 };
 
 /**
- * Physically impossible thresholds — absolute limits
- * If a value is better than these, it's physically impossible for grassroots youth
+ * Physically impossible thresholds — absolute world-record human limits.
+ * If a value crosses these, it's flagged as severe "high" anomaly indicating a fabricated entry or extreme typo.
  */
 const IMPOSSIBLE_THRESHOLDS = {
-    '100m': 9.5,       // World record level — impossible for U-14
-    '200m': 19.0,
-    '400m': 43.0,
-    '30m_sprint': 3.0,
-    '60m_sprint': 6.5,
-    '600m_run': 80,
-    'long_jump': 8.5,
-    'high_jump': 2.4,
-    'bowling_speed': 165,
-    'sprint_40m': 4.0,
+    '100m': { limit: 9.5, type: 'lower' },       // Usain Bolt is 9.58s
+    '200m': { limit: 19.0, type: 'lower' },
+    '400m': { limit: 43.0, type: 'lower' },
+    '30m_sprint': { limit: 3.0, type: 'lower' },
+    '60m_sprint': { limit: 6.0, type: 'lower' },
+    '600m_run': { limit: 70, type: 'lower' },
+    'long_jump': { limit: 8.95, type: 'upper' }, // Mike Powell 8.95m
+    'high_jump': { limit: 2.45, type: 'upper' },
+    'bowling_speed': { limit: 165, type: 'upper' },
+    'sprint_40m': { limit: 4.0, type: 'lower' },
 };
 
 /**
- * Check assessment for anomalies
- * @param {Object} assessment - Assessment object with testType, value
- * @param {string} sport - Sport name
+ * Scan a single assessment record for anomalies by comparing it against
+ * physiological possibility thresholds and grassroots statistical variances.
+ * 
+ * @param {Object} assessment - Assessment metric payload carrying { testType, value, unit }
  * @returns {{ isAnomaly: boolean, flags: string[], severity: 'low'|'medium'|'high' }}
  */
-export function checkAnomalies(assessment, sport) {
+export function checkAnomalies(assessment) {
     const flags = [];
     let severity = 'low';
     const { testType, value } = assessment;
+    const numVal = parseFloat(value);
 
-    // 1. Physically impossible check
-    const impossibleLimit = IMPOSSIBLE_THRESHOLDS[testType];
-    if (impossibleLimit !== undefined) {
-        // For time-based events, lower is faster (better)
-        const isTimeBased = ['s'].includes(assessment.unit);
-        if (isTimeBased && value < impossibleLimit) {
-            flags.push(`Physically impossible: ${value}${assessment.unit} is below world-record level (${impossibleLimit}${assessment.unit})`);
-            severity = 'high';
-        }
-        // For distance/speed, higher is better
-        if (!isTimeBased && value > impossibleLimit) {
-            flags.push(`Physically impossible: ${value}${assessment.unit} exceeds known limits (${impossibleLimit}${assessment.unit})`);
-            severity = 'high';
-        }
+    if (isNaN(numVal)) {
+        return { isAnomaly: true, flags: ['Invalid: measurement value is not a number'], severity: 'high' };
     }
 
-    // 2. Statistical outlier detection (> 3 std devs from mean)
-    const range = PERFORMANCE_RANGES[testType];
-    if (range) {
-        const zScore = Math.abs((value - range.mean) / range.stdDev);
-        if (zScore > 3) {
-            flags.push(`Statistical outlier: ${value} is ${zScore.toFixed(1)} std deviations from mean (${range.mean})`);
-            if (severity !== 'high') severity = 'medium';
-        } else if (zScore > 2.5) {
-            flags.push(`Unusual value: ${value} is ${zScore.toFixed(1)} std deviations from expected range`);
-            if (severity === 'low') severity = 'low';
-        }
-
-        // Out of valid range
-        if (value < range.min || value > range.max) {
-            flags.push(`Out of expected range: ${value} not in [${range.min}, ${range.max}]`);
-            if (severity !== 'high') severity = 'medium';
-        }
-    }
-
-    // 3. Negative or zero value check
-    if (value <= 0 && testType !== 'flexibility_sit_reach') {
-        flags.push('Invalid: value is zero or negative');
+    // 1. Negative or zero value check (except allowed negative flexibility)
+    if (numVal <= 0 && testType !== 'flexibility_sit_reach') {
+        flags.push(`Invalid syntax: recorded value (${numVal}) cannot be zero or negative.`);
         severity = 'high';
+    }
+
+    // 2. Physically Impossible World Record Sanity Check
+    const impossible = IMPOSSIBLE_THRESHOLDS[testType];
+    if (impossible) {
+        if (impossible.type === 'lower' && numVal < impossible.limit) {
+            flags.push(`Physically Impossible: ${numVal}${assessment.unit} breaks human physiological limits (${impossible.limit}${assessment.unit}).`);
+            severity = 'high';
+        } else if (impossible.type === 'upper' && numVal > impossible.limit) {
+            flags.push(`Physically Impossible: ${numVal}${assessment.unit} exceeds mathematical bounds (${impossible.limit}${assessment.unit}).`);
+            severity = 'high';
+        }
+    }
+
+    // 3. Statistical Standard Deviation Detection (Grassroots variance)
+    const range = PERFORMANCE_RANGES[testType];
+    if (range && severity !== 'high') { // Don't bother with std dev if already flagged as impossible
+        const zScore = Math.abs((numVal - range.mean) / range.stdDev);
+
+        // Anything outside [min, max] range is a medium flag
+        if (numVal < range.min || numVal > range.max) {
+            flags.push(`Out of Bounds: ${numVal} lies significantly outside expected U-14/U-16 age brackets [${range.min}, ${range.max}].`);
+            severity = 'medium';
+        }
+        // Z-Score statistical anomaly checks
+        else if (zScore > 3) {
+            flags.push(`Statistical Outlier: ${numVal} deviates by ${zScore.toFixed(1)}σ from the grassroots average.`);
+            severity = 'medium';
+        } else if (zScore > 2) {
+            flags.push(`Unusual Entry: Performance marked ${zScore.toFixed(1)}σ from norm.`);
+            // Keeps severity low if it's just unusual but not completely broken
+        }
     }
 
     return {
@@ -115,16 +119,18 @@ export function checkAnomalies(assessment, sport) {
 }
 
 /**
- * Check attestor reputation
- * @param {string} phone - Witness phone number
- * @param {Array} allAttestations - All attestations in the system
- * @returns {{ trustScore: number, flag: string|null }}
+ * Check attestor reputation to prevent duplicate mass verifications (fraud rings).
+ * Scrutinizes number of attestations generated by a single witness phone across 24h.
+ * 
+ * @param {string} phone - Witness phone number undergoing verification
+ * @param {Array} allAttestations - Historic local/synced attestation array
+ * @returns {{ trustScore: number, flag: string|null }} Output score out of 100%
  */
 export function checkAttestorReputation(phone, allAttestations = []) {
     const now = Date.now();
     const last24h = now - (24 * 60 * 60 * 1000);
 
-    // Count attestations by this phone in last 24 hours
+    // Count attestations by this phone within 24hr window
     const recentCount = allAttestations.filter(a =>
         a.witnessPhone === phone && a.timestamp > last24h
     ).length;
@@ -133,11 +139,12 @@ export function checkAttestorReputation(phone, allAttestations = []) {
     let flag = null;
 
     if (recentCount > 20) {
-        trustScore = Math.max(0, 100 - (recentCount - 20) * 5);
-        flag = `Suspicious: This phone has verified ${recentCount} assessments in the last 24 hours (limit: 20)`;
+        // Penalty calculation: Minus 5 points per attestation over the 20 limits
+        trustScore = Math.max(0, 100 - ((recentCount - 20) * 5));
+        flag = `🚨 Suspicious Volume: Phone number validated ${recentCount} distinct entries across past 24H (Soft Limit: 20)`;
     } else if (recentCount > 10) {
         trustScore = 80;
-        flag = `Note: This phone has verified ${recentCount} assessments recently`;
+        flag = `⚠️ Notice: Witness verified ${recentCount} assessments recently. Moderate trust reduction applied.`;
     }
 
     return { trustScore, flag };

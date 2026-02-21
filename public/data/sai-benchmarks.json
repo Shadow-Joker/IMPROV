@@ -1,0 +1,514 @@
+{
+    "30m_sprint": {
+        "lowerIsBetter": true,
+        "unit": "s",
+        "U-12": {
+            "male": {
+                "excellent": 4.8,
+                "good": 5.5,
+                "avg": 6.0
+            },
+            "female": {
+                "excellent": 5.2,
+                "good": 5.8,
+                "avg": 6.3
+            }
+        },
+        "U-14": {
+            "male": {
+                "excellent": 4.4,
+                "good": 5.0,
+                "avg": 5.5
+            },
+            "female": {
+                "excellent": 4.8,
+                "good": 5.4,
+                "avg": 5.9
+            }
+        },
+        "U-16": {
+            "male": {
+                "excellent": 4.0,
+                "good": 4.5,
+                "avg": 5.0
+            },
+            "female": {
+                "excellent": 4.5,
+                "good": 5.0,
+                "avg": 5.5
+            }
+        },
+        "U-18": {
+            "male": {
+                "excellent": 3.8,
+                "good": 4.2,
+                "avg": 4.7
+            },
+            "female": {
+                "excellent": 4.2,
+                "good": 4.7,
+                "avg": 5.2
+            }
+        },
+        "U-21": {
+            "male": {
+                "excellent": 3.6,
+                "good": 4.0,
+                "avg": 4.5
+            },
+            "female": {
+                "excellent": 4.0,
+                "good": 4.5,
+                "avg": 5.0
+            }
+        }
+    },
+    "60m_sprint": {
+        "lowerIsBetter": true,
+        "unit": "s",
+        "U-12": {
+            "male": {
+                "excellent": 8.5,
+                "good": 9.5,
+                "avg": 10.5
+            },
+            "female": {
+                "excellent": 9.0,
+                "good": 10.0,
+                "avg": 11.0
+            }
+        },
+        "U-14": {
+            "male": {
+                "excellent": 7.8,
+                "good": 8.8,
+                "avg": 9.5
+            },
+            "female": {
+                "excellent": 8.5,
+                "good": 9.3,
+                "avg": 10.2
+            }
+        },
+        "U-16": {
+            "male": {
+                "excellent": 7.2,
+                "good": 8.0,
+                "avg": 8.8
+            },
+            "female": {
+                "excellent": 7.8,
+                "good": 8.6,
+                "avg": 9.5
+            }
+        },
+        "U-18": {
+            "male": {
+                "excellent": 6.9,
+                "good": 7.5,
+                "avg": 8.2
+            },
+            "female": {
+                "excellent": 7.5,
+                "good": 8.2,
+                "avg": 9.0
+            }
+        },
+        "U-21": {
+            "male": {
+                "excellent": 6.7,
+                "good": 7.2,
+                "avg": 7.8
+            },
+            "female": {
+                "excellent": 7.2,
+                "good": 7.8,
+                "avg": 8.5
+            }
+        }
+    },
+    "600m_run": {
+        "lowerIsBetter": true,
+        "unit": "s",
+        "U-12": {
+            "male": {
+                "excellent": 115,
+                "good": 135,
+                "avg": 155
+            },
+            "female": {
+                "excellent": 125,
+                "good": 145,
+                "avg": 165
+            }
+        },
+        "U-14": {
+            "male": {
+                "excellent": 105,
+                "good": 120,
+                "avg": 140
+            },
+            "female": {
+                "excellent": 115,
+                "good": 135,
+                "avg": 155
+            }
+        },
+        "U-16": {
+            "male": {
+                "excellent": 95,
+                "good": 110,
+                "avg": 128
+            },
+            "female": {
+                "excellent": 108,
+                "good": 125,
+                "avg": 145
+            }
+        },
+        "U-18": {
+            "male": {
+                "excellent": 88,
+                "good": 102,
+                "avg": 120
+            },
+            "female": {
+                "excellent": 100,
+                "good": 118,
+                "avg": 138
+            }
+        },
+        "U-21": {
+            "male": {
+                "excellent": 82,
+                "good": 96,
+                "avg": 112
+            },
+            "female": {
+                "excellent": 95,
+                "good": 112,
+                "avg": 130
+            }
+        }
+    },
+    "standing_broad_jump": {
+        "lowerIsBetter": false,
+        "unit": "cm",
+        "U-12": {
+            "male": {
+                "excellent": 185,
+                "good": 160,
+                "avg": 140
+            },
+            "female": {
+                "excellent": 170,
+                "good": 148,
+                "avg": 130
+            }
+        },
+        "U-14": {
+            "male": {
+                "excellent": 210,
+                "good": 185,
+                "avg": 160
+            },
+            "female": {
+                "excellent": 190,
+                "good": 168,
+                "avg": 148
+            }
+        },
+        "U-16": {
+            "male": {
+                "excellent": 240,
+                "good": 210,
+                "avg": 185
+            },
+            "female": {
+                "excellent": 210,
+                "good": 185,
+                "avg": 162
+            }
+        },
+        "U-18": {
+            "male": {
+                "excellent": 260,
+                "good": 230,
+                "avg": 200
+            },
+            "female": {
+                "excellent": 225,
+                "good": 198,
+                "avg": 175
+            }
+        },
+        "U-21": {
+            "male": {
+                "excellent": 275,
+                "good": 245,
+                "avg": 215
+            },
+            "female": {
+                "excellent": 235,
+                "good": 208,
+                "avg": 182
+            }
+        }
+    },
+    "vertical_jump": {
+        "lowerIsBetter": false,
+        "unit": "cm",
+        "U-12": {
+            "male": {
+                "excellent": 38,
+                "good": 30,
+                "avg": 24
+            },
+            "female": {
+                "excellent": 34,
+                "good": 27,
+                "avg": 21
+            }
+        },
+        "U-14": {
+            "male": {
+                "excellent": 48,
+                "good": 38,
+                "avg": 30
+            },
+            "female": {
+                "excellent": 40,
+                "good": 32,
+                "avg": 25
+            }
+        },
+        "U-16": {
+            "male": {
+                "excellent": 56,
+                "good": 45,
+                "avg": 36
+            },
+            "female": {
+                "excellent": 45,
+                "good": 36,
+                "avg": 28
+            }
+        },
+        "U-18": {
+            "male": {
+                "excellent": 62,
+                "good": 50,
+                "avg": 40
+            },
+            "female": {
+                "excellent": 48,
+                "good": 39,
+                "avg": 31
+            }
+        },
+        "U-21": {
+            "male": {
+                "excellent": 66,
+                "good": 54,
+                "avg": 44
+            },
+            "female": {
+                "excellent": 50,
+                "good": 42,
+                "avg": 34
+            }
+        }
+    },
+    "shuttle_run_4x10m": {
+        "lowerIsBetter": true,
+        "unit": "s",
+        "U-12": {
+            "male": {
+                "excellent": 11.0,
+                "good": 12.5,
+                "avg": 14.0
+            },
+            "female": {
+                "excellent": 11.8,
+                "good": 13.2,
+                "avg": 14.8
+            }
+        },
+        "U-14": {
+            "male": {
+                "excellent": 10.2,
+                "good": 11.5,
+                "avg": 13.0
+            },
+            "female": {
+                "excellent": 11.0,
+                "good": 12.4,
+                "avg": 14.0
+            }
+        },
+        "U-16": {
+            "male": {
+                "excellent": 9.5,
+                "good": 10.8,
+                "avg": 12.2
+            },
+            "female": {
+                "excellent": 10.5,
+                "good": 11.8,
+                "avg": 13.2
+            }
+        },
+        "U-18": {
+            "male": {
+                "excellent": 9.0,
+                "good": 10.2,
+                "avg": 11.5
+            },
+            "female": {
+                "excellent": 10.0,
+                "good": 11.2,
+                "avg": 12.5
+            }
+        },
+        "U-21": {
+            "male": {
+                "excellent": 8.8,
+                "good": 9.8,
+                "avg": 11.0
+            },
+            "female": {
+                "excellent": 9.6,
+                "good": 10.8,
+                "avg": 12.0
+            }
+        }
+    },
+    "flexibility_sit_reach": {
+        "lowerIsBetter": false,
+        "unit": "cm",
+        "U-12": {
+            "male": {
+                "excellent": 30,
+                "good": 22,
+                "avg": 15
+            },
+            "female": {
+                "excellent": 35,
+                "good": 27,
+                "avg": 20
+            }
+        },
+        "U-14": {
+            "male": {
+                "excellent": 33,
+                "good": 25,
+                "avg": 18
+            },
+            "female": {
+                "excellent": 38,
+                "good": 30,
+                "avg": 22
+            }
+        },
+        "U-16": {
+            "male": {
+                "excellent": 36,
+                "good": 28,
+                "avg": 20
+            },
+            "female": {
+                "excellent": 40,
+                "good": 32,
+                "avg": 24
+            }
+        },
+        "U-18": {
+            "male": {
+                "excellent": 38,
+                "good": 30,
+                "avg": 22
+            },
+            "female": {
+                "excellent": 42,
+                "good": 34,
+                "avg": 26
+            }
+        },
+        "U-21": {
+            "male": {
+                "excellent": 40,
+                "good": 32,
+                "avg": 24
+            },
+            "female": {
+                "excellent": 44,
+                "good": 36,
+                "avg": 28
+            }
+        }
+    },
+    "bmi": {
+        "lowerIsBetter": false,
+        "unit": "kg/m²",
+        "U-12": {
+            "male": {
+                "excellent": 18.5,
+                "good": 17.0,
+                "avg": 15.5
+            },
+            "female": {
+                "excellent": 18.5,
+                "good": 17.0,
+                "avg": 15.5
+            }
+        },
+        "U-14": {
+            "male": {
+                "excellent": 20.0,
+                "good": 18.5,
+                "avg": 17.0
+            },
+            "female": {
+                "excellent": 20.5,
+                "good": 19.0,
+                "avg": 17.5
+            }
+        },
+        "U-16": {
+            "male": {
+                "excellent": 21.5,
+                "good": 20.0,
+                "avg": 18.5
+            },
+            "female": {
+                "excellent": 21.5,
+                "good": 20.0,
+                "avg": 18.5
+            }
+        },
+        "U-18": {
+            "male": {
+                "excellent": 22.5,
+                "good": 21.0,
+                "avg": 19.5
+            },
+            "female": {
+                "excellent": 22.0,
+                "good": 20.5,
+                "avg": 19.0
+            }
+        },
+        "U-21": {
+            "male": {
+                "excellent": 23.0,
+                "good": 21.5,
+                "avg": 20.0
+            },
+            "female": {
+                "excellent": 22.5,
+                "good": 21.0,
+                "avg": 19.5
+            }
+        }
+    }
+}

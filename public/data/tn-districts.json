@@ -1,0 +1,520 @@
+[
+    {
+        "id": "chennai",
+        "name": "Chennai",
+        "nameTamil": "சென்னை",
+        "population": 4646732,
+        "taluks": [
+            "Egmore",
+            "Fort Tondiarpet",
+            "Mylapore",
+            "Perambur",
+            "Ambattur",
+            "Madhavaram"
+        ]
+    },
+    {
+        "id": "coimbatore",
+        "name": "Coimbatore",
+        "nameTamil": "கோயம்புத்தூர்",
+        "population": 3458045,
+        "taluks": [
+            "Coimbatore North",
+            "Coimbatore South",
+            "Sulur",
+            "Mettupalayam",
+            "Pollachi",
+            "Valparai"
+        ]
+    },
+    {
+        "id": "madurai",
+        "name": "Madurai",
+        "nameTamil": "மதுரை",
+        "population": 3038252,
+        "taluks": [
+            "Madurai North",
+            "Madurai South",
+            "Melur",
+            "Thirumangalam",
+            "Usilampatti",
+            "Peraiyur"
+        ]
+    },
+    {
+        "id": "tiruchirappalli",
+        "name": "Tiruchirappalli",
+        "nameTamil": "திருச்சிராப்பள்ளி",
+        "population": 2722290,
+        "taluks": [
+            "Tiruchirappalli",
+            "Srirangam",
+            "Lalgudi",
+            "Musiri",
+            "Manachanallur",
+            "Thottiyam"
+        ]
+    },
+    {
+        "id": "salem",
+        "name": "Salem",
+        "nameTamil": "சேலம்",
+        "population": 3482056,
+        "taluks": [
+            "Salem",
+            "Attur",
+            "Mettur",
+            "Omalur",
+            "Sangagiri",
+            "Edappadi"
+        ]
+    },
+    {
+        "id": "tirunelveli",
+        "name": "Tirunelveli",
+        "nameTamil": "திருநெல்வேலி",
+        "population": 3077233,
+        "taluks": [
+            "Tirunelveli",
+            "Ambasamudram",
+            "Palayamkottai",
+            "Nanguneri",
+            "Sankarankovil",
+            "Radhapuram"
+        ]
+    },
+    {
+        "id": "erode",
+        "name": "Erode",
+        "nameTamil": "ஈரோடு",
+        "population": 2251744,
+        "taluks": [
+            "Erode",
+            "Bhavani",
+            "Gobichettipalayam",
+            "Sathyamangalam",
+            "Perundurai",
+            "Anthiyur"
+        ]
+    },
+    {
+        "id": "vellore",
+        "name": "Vellore",
+        "nameTamil": "வேலூர்",
+        "population": 3936331,
+        "taluks": [
+            "Vellore",
+            "Arcot",
+            "Gudiyatham",
+            "Katpadi",
+            "Ambur"
+        ]
+    },
+    {
+        "id": "thoothukudi",
+        "name": "Thoothukudi",
+        "nameTamil": "தூத்துக்குடி",
+        "population": 1750176,
+        "taluks": [
+            "Thoothukudi",
+            "Kovilpatti",
+            "Tiruchendur",
+            "Ottapidaram",
+            "Vilathikulam",
+            "Srivaikuntam"
+        ]
+    },
+    {
+        "id": "dindigul",
+        "name": "Dindigul",
+        "nameTamil": "திண்டுக்கல்",
+        "population": 2159775,
+        "taluks": [
+            "Dindigul",
+            "Palani",
+            "Oddanchatram",
+            "Natham",
+            "Nilakottai",
+            "Kodaikanal"
+        ]
+    },
+    {
+        "id": "thanjavur",
+        "name": "Thanjavur",
+        "nameTamil": "தஞ்சாவூர்",
+        "population": 2405890,
+        "taluks": [
+            "Thanjavur",
+            "Kumbakonam",
+            "Pattukkottai",
+            "Orathanadu",
+            "Peravurani",
+            "Thiruvidaimarudur"
+        ]
+    },
+    {
+        "id": "ranipet",
+        "name": "Ranipet",
+        "nameTamil": "ராணிப்பேட்டை",
+        "population": 1210277,
+        "taluks": [
+            "Ranipet",
+            "Arakkonam",
+            "Walajapet",
+            "Arcot",
+            "Sholinghur"
+        ]
+    },
+    {
+        "id": "sivaganga",
+        "name": "Sivaganga",
+        "nameTamil": "சிவகங்கை",
+        "population": 1339101,
+        "taluks": [
+            "Sivaganga",
+            "Karaikudi",
+            "Devakottai",
+            "Manamadurai",
+            "Ilayankudi",
+            "Tirupathur"
+        ]
+    },
+    {
+        "id": "karur",
+        "name": "Karur",
+        "nameTamil": "கரூர்",
+        "population": 1064493,
+        "taluks": [
+            "Karur",
+            "Kulithalai",
+            "Aravakurichi",
+            "Krishnarayapuram",
+            "Manmangalam"
+        ]
+    },
+    {
+        "id": "tiruvannamalai",
+        "name": "Tiruvannamalai",
+        "nameTamil": "திருவண்ணாமலை",
+        "population": 2464875,
+        "taluks": [
+            "Tiruvannamalai",
+            "Arani",
+            "Chengam",
+            "Polur",
+            "Cheyyar",
+            "Vandavasi",
+            "Kalasapakkam"
+        ]
+    },
+    {
+        "id": "namakkal",
+        "name": "Namakkal",
+        "nameTamil": "நாமக்கல்",
+        "population": 1726601,
+        "taluks": [
+            "Namakkal",
+            "Rasipuram",
+            "Tiruchengode",
+            "Paramathi Velur",
+            "Kolli Hills",
+            "Senthamangalam"
+        ]
+    },
+    {
+        "id": "tiruppur",
+        "name": "Tiruppur",
+        "nameTamil": "திருப்பூர்",
+        "population": 2479052,
+        "taluks": [
+            "Tiruppur North",
+            "Tiruppur South",
+            "Avinashi",
+            "Palladam",
+            "Dharapuram",
+            "Udumalpet",
+            "Kangeyam"
+        ]
+    },
+    {
+        "id": "cuddalore",
+        "name": "Cuddalore",
+        "nameTamil": "கடலூர்",
+        "population": 2605914,
+        "taluks": [
+            "Cuddalore",
+            "Chidambaram",
+            "Kattumannarkoil",
+            "Virudhachalam",
+            "Kurinjipadi",
+            "Panruti"
+        ]
+    },
+    {
+        "id": "kanchipuram",
+        "name": "Kanchipuram",
+        "nameTamil": "காஞ்சிபுரம்",
+        "population": 1166401,
+        "taluks": [
+            "Kanchipuram",
+            "Uthiramerur",
+            "Sriperumbudur",
+            "Walajabad"
+        ]
+    },
+    {
+        "id": "krishnagiri",
+        "name": "Krishnagiri",
+        "nameTamil": "கிருஷ்ணகிரி",
+        "population": 1879809,
+        "taluks": [
+            "Krishnagiri",
+            "Hosur",
+            "Denkanikottai",
+            "Pochampalli",
+            "Veppanapalli",
+            "Uthangarai"
+        ]
+    },
+    {
+        "id": "dharmapuri",
+        "name": "Dharmapuri",
+        "nameTamil": "தருமபுரி",
+        "population": 1506843,
+        "taluks": [
+            "Dharmapuri",
+            "Palacode",
+            "Pennagaram",
+            "Harur",
+            "Nallampalli",
+            "Karimangalam"
+        ]
+    },
+    {
+        "id": "nagapattinam",
+        "name": "Nagapattinam",
+        "nameTamil": "நாகப்பட்டினம்",
+        "population": 1616450,
+        "taluks": [
+            "Nagapattinam",
+            "Kilvelur",
+            "Thirukkuvalai",
+            "Vedaranyam"
+        ]
+    },
+    {
+        "id": "villupuram",
+        "name": "Villupuram",
+        "nameTamil": "விழுப்புரம்",
+        "population": 3458873,
+        "taluks": [
+            "Villupuram",
+            "Gingee",
+            "Vanur",
+            "Tindivanam",
+            "Ulundurpettai",
+            "Kallakurichi"
+        ]
+    },
+    {
+        "id": "virudhunagar",
+        "name": "Virudhunagar",
+        "nameTamil": "விருதுநகர்",
+        "population": 1942288,
+        "taluks": [
+            "Virudhunagar",
+            "Sivakasi",
+            "Sattur",
+            "Rajapalayam",
+            "Srivilliputhur",
+            "Aruppukottai"
+        ]
+    },
+    {
+        "id": "theni",
+        "name": "Theni",
+        "nameTamil": "தேனி",
+        "population": 1245899,
+        "taluks": [
+            "Theni",
+            "Periyakulam",
+            "Bodinayakanur",
+            "Uthamapalayam",
+            "Andipatti"
+        ]
+    },
+    {
+        "id": "perambalur",
+        "name": "Perambalur",
+        "nameTamil": "பெரம்பலூர்",
+        "population": 565223,
+        "taluks": [
+            "Perambalur",
+            "Kunnam",
+            "Veppanthattai",
+            "Alathur"
+        ]
+    },
+    {
+        "id": "ariyalur",
+        "name": "Ariyalur",
+        "nameTamil": "அரியலூர்",
+        "population": 754894,
+        "taluks": [
+            "Ariyalur",
+            "Sendurai",
+            "Andimadam",
+            "Udayarpalayam",
+            "T.Palur"
+        ]
+    },
+    {
+        "id": "nilgiris",
+        "name": "Nilgiris",
+        "nameTamil": "நீலகிரி",
+        "population": 735394,
+        "taluks": [
+            "Udhagamandalam",
+            "Coonoor",
+            "Gudalur",
+            "Kotagiri",
+            "Kundah",
+            "Pandalur"
+        ]
+    },
+    {
+        "id": "ramanathapuram",
+        "name": "Ramanathapuram",
+        "nameTamil": "ராமநாதபுரம்",
+        "population": 1353445,
+        "taluks": [
+            "Ramanathapuram",
+            "Paramakudi",
+            "Mudukulathur",
+            "Kamuthi",
+            "Rameswaram",
+            "Tiruvadanai"
+        ]
+    },
+    {
+        "id": "pudukkottai",
+        "name": "Pudukkottai",
+        "nameTamil": "புதுக்கோட்டை",
+        "population": 1618345,
+        "taluks": [
+            "Pudukkottai",
+            "Aranthangi",
+            "Alangudi",
+            "Gandarvakottai",
+            "Illuppur",
+            "Thirumayam"
+        ]
+    },
+    {
+        "id": "kallakurichi",
+        "name": "Kallakurichi",
+        "nameTamil": "கள்ளக்குறிச்சி",
+        "population": 1370281,
+        "taluks": [
+            "Kallakurichi",
+            "Sankarapuram",
+            "Tirukoilur",
+            "Chinnasalem",
+            "Ulundurpet"
+        ]
+    },
+    {
+        "id": "chengalpattu",
+        "name": "Chengalpattu",
+        "nameTamil": "செங்கல்பட்டு",
+        "population": 2556244,
+        "taluks": [
+            "Chengalpattu",
+            "Tambaram",
+            "Vandalur",
+            "Maduranthakam",
+            "Tiruporur",
+            "Pallavaram"
+        ]
+    },
+    {
+        "id": "tirupattur",
+        "name": "Tirupattur",
+        "nameTamil": "திருப்பத்தூர்",
+        "population": 1111812,
+        "taluks": [
+            "Tirupattur",
+            "Vaniyambadi",
+            "Ambur",
+            "Natrampalli"
+        ]
+    },
+    {
+        "id": "tenkasi",
+        "name": "Tenkasi",
+        "nameTamil": "தென்காசி",
+        "population": 1407627,
+        "taluks": [
+            "Tenkasi",
+            "Shencottai",
+            "Kadayanallur",
+            "Sankarankovil",
+            "Alangulam",
+            "Sivagiri"
+        ]
+    },
+    {
+        "id": "mayiladuthurai",
+        "name": "Mayiladuthurai",
+        "nameTamil": "மயிலாடுதுறை",
+        "population": 918356,
+        "taluks": [
+            "Mayiladuthurai",
+            "Sirkali",
+            "Tharangambadi",
+            "Kuthalam",
+            "Kollidam"
+        ]
+    },
+    {
+        "id": "kanyakumari",
+        "name": "Kanyakumari",
+        "nameTamil": "கன்னியாகுமரி",
+        "population": 1870374,
+        "taluks": [
+            "Nagercoil",
+            "Thovalai",
+            "Agastheeswaram",
+            "Kalkulam",
+            "Vilavancode",
+            "Killiyoor"
+        ]
+    },
+    {
+        "id": "tiruvallur",
+        "name": "Tiruvallur",
+        "nameTamil": "திருவள்ளூர்",
+        "population": 3728104,
+        "taluks": [
+            "Tiruvallur",
+            "Ponneri",
+            "Gummidipoondi",
+            "Tiruttani",
+            "Avadi",
+            "Ambattur",
+            "Poonamallee"
+        ]
+    },
+    {
+        "id": "the_nilgiris",
+        "name": "The Nilgiris (Ooty)",
+        "nameTamil": "நீலகிரி (ஊட்டி)",
+        "population": 735071,
+        "taluks": [
+            "Udhagamandalam",
+            "Coonoor",
+            "Kotagiri",
+            "Gudalur"
+        ]
+    }
+]

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Clock, Users, Trophy, MapPin } from 'lucide-react';
+import { Clock, Users, Trophy, MapPin, ChevronRight, Play } from 'lucide-react';
 import { SPORT_ICONS } from '../../utils/sportMetrics';
 
 /**
@@ -8,6 +8,7 @@ import { SPORT_ICONS } from '../../utils/sportMetrics';
  */
 export default function ChallengeCard({ challenge }) {
     const {
+        id,
         title,
         sport,
         ageGroup,
@@ -22,8 +23,8 @@ export default function ChallengeCard({ challenge }) {
     const daysRemaining = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
     const isUrgent = daysRemaining <= 3;
 
-    // Top 3 leaders (from entries)
-    const topEntries = entries
+    // Top 3 leaders (from entries) - auto sorting based on test metric
+    const topEntries = [...entries]
         .sort((a, b) => {
             // Lower time is better for timer events, higher is better for others
             if (['sprint', 'run', 'shuttle'].some(k => testType?.includes(k))) {
@@ -34,111 +35,98 @@ export default function ChallengeCard({ challenge }) {
         .slice(0, 3);
 
     return (
-        <div className="glass-card hover-lift animate-fade-in" style={{ position: 'relative', overflow: 'hidden' }}>
-            {/* Gradient accent top bar */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: 'var(--gradient-hero)',
-            }} />
+        <div className="glass-card flex flex-col h-full hover-scale animate-fade-in group relative overflow-hidden" style={{ padding: 0, border: isUrgent ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255,255,255,0.08)' }}>
+            {/* Dynamic Header Banner */}
+            <div className="p-lg relative" style={{ background: 'var(--bg-card)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
 
-            {/* Header */}
-            <div className="flex items-center gap-md mb-md" style={{ paddingTop: 'var(--space-xs)' }}>
-                <div style={{
-                    fontSize: '2rem',
-                    width: '50px',
-                    height: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'var(--bg-glass)',
-                    borderRadius: 'var(--radius-md)',
-                }}>
-                    {SPORT_ICONS[sport] || '🏅'}
+                {/* Subtle Background Icon */}
+                <div className="absolute top-0 right-0 -mr-6 -mt-6 opacity-5 transition-transform group-hover:scale-110 group-hover:rotate-12 duration-500">
+                    <Trophy size={140} color="var(--accent-primary)" />
                 </div>
-                <div style={{ flex: 1 }}>
-                    <h3 className="heading-4" style={{ fontSize: '1rem', lineHeight: 1.3 }}>
-                        {title}
-                    </h3>
-                    <div className="flex items-center gap-xs mt-xs">
-                        <MapPin size={12} color="var(--text-muted)" />
-                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>
-                            {district}
-                        </span>
+
+                <div className="flex justify-between items-start mb-md relative z-10">
+                    <div className="flex gap-sm">
+                        <span className="badge badge-pending tracking-widest uppercase" style={{ fontSize: '0.65rem' }}>{ageGroup}</span>
+                        <span className="badge bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 tracking-wider uppercase" style={{ fontSize: '0.65rem' }}>{sport?.replace('_', ' ')}</span>
+                    </div>
+                    <span className={`badge flex items-center gap-xs font-bold shadow-lg ${isUrgent ? 'bg-red-500 text-white border-red-400' : 'bg-white/10 text-white border-white/20'}`} style={{ fontSize: '0.7rem' }}>
+                        <Clock size={12} className={isUrgent ? 'animate-pulse' : ''} />
+                        {daysRemaining}d left
+                    </span>
+                </div>
+
+                <div className="flex items-start gap-md relative z-10">
+                    <div style={{
+                        fontSize: '2rem', width: '48px', height: '48px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'var(--gradient-hero)', borderRadius: 'var(--radius-lg)',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+                    }}>
+                        {SPORT_ICONS[sport] || '🏅'}
+                    </div>
+                    <div>
+                        <h3 className="heading-3 mb-xs text-white group-hover:text-indigo-300 transition-colors" style={{ fontSize: '1.2rem', lineHeight: 1.2 }}>
+                            {title}
+                        </h3>
+                        <div className="flex items-center gap-xs text-muted">
+                            <MapPin size={14} color="var(--accent-secondary)" />
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{district}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Badges row */}
-            <div className="flex gap-sm flex-wrap mb-md">
-                <span className="badge badge-pending" style={{ fontSize: '0.65rem' }}>
-                    {ageGroup}
-                </span>
-                <span className="badge" style={{
-                    fontSize: '0.65rem',
-                    background: 'rgba(99, 102, 241, 0.15)',
-                    color: 'var(--accent-primary)',
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
-                }}>
-                    {sport?.replace('_', ' ')}
-                </span>
-                {/* Timer badge */}
-                <span className={`badge ${isUrgent ? 'badge-danger' : 'badge-verified'}`} style={{ fontSize: '0.65rem', marginLeft: 'auto' }}>
-                    <Clock size={10} />
-                    {daysRemaining}d left
-                </span>
-            </div>
+            {/* Leaderboard Body */}
+            <div className="p-lg flex-1 flex flex-col bg-black/40">
+                <div className="flex justify-between items-center mb-md border-b border-white/5 pb-sm">
+                    <h4 className="text-secondary tracking-widest uppercase text-xs font-bold drop-shadow-md">🏆 Live Hierarchy</h4>
+                    <div className="flex items-center gap-xs bg-white/5 px-sm py-xs rounded-full">
+                        <Users size={12} className="text-indigo-400" />
+                        <span className="text-white text-xs font-bold">{entries.length} Actives</span>
+                    </div>
+                </div>
 
-            {/* Entry count */}
-            <div className="flex items-center gap-sm mb-md" style={{ fontSize: '0.85rem' }}>
-                <Users size={14} color="var(--accent-secondary)" />
-                <span className="text-secondary">
-                    {entries.length} athlete{entries.length !== 1 ? 's' : ''} entered
-                </span>
-            </div>
-
-            {/* Top 3 leaders */}
-            {topEntries.length > 0 && (
-                <div className="mb-md">
-                    <h4 className="text-muted mb-xs" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                        🏆 Current Leaders
-                    </h4>
-                    <div className="flex flex-col gap-xs">
+                {topEntries.length > 0 ? (
+                    <div className="flex flex-col gap-sm flex-1">
                         {topEntries.map((entry, i) => (
-                            <div key={i} className="flex items-center gap-sm" style={{
-                                padding: '4px 8px',
-                                background: 'var(--bg-glass)',
-                                borderRadius: 'var(--radius-sm)',
-                                fontSize: '0.8rem',
-                            }}>
-                                <span style={{
-                                    fontWeight: 700,
-                                    color: i === 0 ? 'var(--accent-gold)' : i === 1 ? '#c0c0c0' : '#cd7f32',
+                            <div key={i} className="flex items-center gap-md bg-white/5 hover:bg-white/10 transition-colors p-sm rounded-lg border border-white/5">
+                                <div style={{
+                                    width: '28px', height: '28px', borderRadius: '50%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    background: i === 0 ? 'linear-gradient(135deg, #FDF0D5 0%, #D4AF37 100%)' : i === 1 ? 'linear-gradient(135deg, #F5F5F5 0%, #C0C0C0 100%)' : 'linear-gradient(135deg, #FAD6A5 0%, #CD7F32 100%)',
+                                    color: 'black', fontWeight: 900, fontSize: '0.8rem', boxShadow: '0 2px 10px rgba(0,0,0,0.5)'
                                 }}>
-                                    {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}
-                                </span>
-                                <span className="text-secondary" style={{ flex: 1 }}>{entry.name}</span>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--accent-success)' }}>
-                                    {entry.value} {entry.unit}
-                                </span>
+                                    {i + 1}
+                                </div>
+                                <div className="flex-1">
+                                    <div className="text-white text-sm font-bold truncate pr-md">{entry.name}</div>
+                                    {/* Subtle id trace */}
+                                    <div className="text-muted text-[10px] font-mono opacity-50">id:{entry.athleteId || 'anon'}</div>
+                                </div>
+                                <div className="text-right">
+                                    <span className="font-mono font-bold text-success text-sm drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">
+                                        {entry.value}
+                                    </span>
+                                    <span className="text-muted text-xs ml-xs">{entry.unit}</span>
+                                </div>
                             </div>
                         ))}
                     </div>
-                </div>
-            )}
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center p-md border border-dashed border-white/10 rounded-lg opacity-50">
+                        <Trophy size={24} className="mb-sm text-muted" />
+                        <span className="text-sm">Be the first to establish<br />a baseline score!</span>
+                    </div>
+                )}
+            </div>
 
-            {/* Enter challenge button */}
-            <Link to="/assess" className="btn btn-primary" style={{
-                width: '100%',
-                textDecoration: 'none',
-                marginTop: 'var(--space-sm)',
-            }}>
-                <Trophy size={16} />
-                Enter Challenge
-            </Link>
+            {/* Footer Action */}
+            <div className="p-md bg-black/60 border-t border-white/10 mt-auto">
+                <Link to={`/assess?challenge=${id}`} className="btn w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold tracking-wide rounded-lg flex items-center justify-between group-hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all">
+                    <span className="flex items-center gap-sm"><Play fill="currentColor" size={16} /> Enter Match </span>
+                    <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                </Link>
+            </div>
         </div>
     );
 }

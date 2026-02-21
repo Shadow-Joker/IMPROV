@@ -1,35 +1,36 @@
 // Firebase Configuration
-// Replace with your actual Firebase project credentials
 import { initializeApp } from 'firebase/app';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
+import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'demo-api-key',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'sentrak-demo.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'sentrak-demo',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'sentrak-demo.appspot.com',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_ID || '000000000000',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:000:web:demo',
+  apiKey: "AIzaSyCsa8TeJ8A3cF3ALdBKXokloFzLkSvBFz8",
+  authDomain: "sentrak-f4333.firebaseapp.com",
+  projectId: "sentrak-f4333",
+  storageBucket: "sentrak-f4333.firebasestorage.app",
+  messagingSenderId: "56799989918",
+  appId: "1:56799989918:web:88734dfaaa0daf516d2b8f",
+  measurementId: "G-ZBKMS43K15"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
+const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
-// Enable offline persistence
-try {
+// Enable offline persistence for Firestore
+if (typeof window !== 'undefined') {
   enableIndexedDbPersistence(db).catch((err) => {
     if (err.code === 'failed-precondition') {
-      console.warn('Firestore persistence: Multiple tabs open');
+      console.warn('[Firebase] Multiple tabs open, persistence can only be enabled in one tab at a time.');
     } else if (err.code === 'unimplemented') {
-      console.warn('Firestore persistence: Browser not supported');
+      console.warn('[Firebase] The current browser does not support all of the features necessary to enable persistence.');
     }
   });
-} catch (e) {
-  console.warn('Firestore persistence already enabled');
 }
 
-export default app;
+export { app, db, auth, storage, analytics };

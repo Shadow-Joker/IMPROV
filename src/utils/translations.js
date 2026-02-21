@@ -1,6 +1,7 @@
 /* ========================================
    SENTRAK — Translations (English + Tamil)
    Owner: Rahul (feat/athlete)
+   Phase 2: Complete audit — every UI string
    ======================================== */
 
 const translations = {
@@ -68,42 +69,75 @@ const translations = {
         mq8: 'Do you enjoy facing stronger opponents?',
         mq9: 'Do you set specific goals for yourself?',
         mq10: 'Can you adapt your strategy during a match?',
-        mq11: 'Can you identify your opponent\'s weaknesses?',
+        mq11: "Can you identify your opponent's weaknesses?",
         mq12: 'Do you review your past performances?',
         mq13: 'How often do you skip practice?',
         mq14: 'Do you follow a daily routine?',
         mq15: 'Can you stay committed to boring training drills?',
 
         // Scale labels
-        scale1: 'Strongly Disagree',
-        scale2: 'Disagree',
-        scale3: 'Neutral',
-        scale4: 'Agree',
-        scale5: 'Strongly Agree',
+        scale1: 'Never',
+        scale2: 'Rarely',
+        scale3: 'Sometimes',
+        scale4: 'Often',
+        scale5: 'Always',
+
+        // Mental result messages
+        championMindset: 'Champion Mindset! 🏆',
+        strongPotential: 'Strong Potential! 💪',
+        growingAthlete: 'Growing Athlete 🌱',
+        keepTraining: 'Keep Training! 🎯',
 
         // Schemes
         schemesTitle: 'Government Sports Schemes',
         schemesSubtitle: 'Schemes you may qualify for',
+        schemesMatched: 'Schemes You Qualify For',
         youQualify: 'You Qualify! ✓',
         learnMore: 'Learn More',
+        applyNow: 'Apply Now →',
         benefit: 'Benefit',
         eligibility: 'Eligibility',
         noSchemes: 'Complete your profile to see matching schemes',
+        totalPotentialValue: 'Total potential value',
 
         // Profile
+        viewProfile: 'View Profile',
         talentRating: 'Talent Rating',
+        totalAssessments: 'Total Assessments',
+        communityVerified: 'Community Verified',
         assessments: 'Assessments',
         verified: 'Verified',
         pending: 'Pending',
         share: 'Share Profile',
+        shareProfile: 'Share Profile',
         shareSuccess: 'Profile link copied!',
+        copiedToClipboard: 'Copied to clipboard!',
         editProfile: 'Edit Profile',
         newAssessment: 'New Assessment',
+        firstAssessmentCTA: 'Record your first assessment →',
+        rankInDistrict: 'Rank in district',
+
+        // Passport
         digitalPassport: 'Digital Talent Passport',
+        talentPassport: 'Talent Passport',
         downloadPassport: 'Download Passport',
+        downloadCard: 'Download Card',
         printPassport: 'Print Passport',
+        printCard: 'Print Card',
+        scanToVerify: 'Scan to verify',
+        generatedOn: 'Generated on',
         athleteProfile: 'Athlete Profile',
         overallScore: 'Overall Score',
+
+        // Photo
+        photoCapture: 'Take Photo',
+        retakePhoto: 'Retake',
+        uploadFromGallery: 'Upload from gallery',
+
+        // Steps
+        step: 'Step',
+        of: 'of',
+        reviewSubmit: 'Review & Submit',
 
         // Common
         save: 'Save',
@@ -117,6 +151,11 @@ const translations = {
         offline: 'You are offline. Data is saved locally.',
         retry: 'Retry',
         close: 'Close',
+        edit: 'Edit',
+        tryAgain: 'Try Again',
+        typeInstead: '⌨️ Type instead',
+        registerAnother: 'Register Another',
+        athleteRegistered: '🎉 Athlete Registered!',
 
         // Status messages
         registerSuccess: 'Athlete registered successfully!',
@@ -124,15 +163,25 @@ const translations = {
         mentalComplete: 'Mental assessment completed!',
         assessmentRecorded: 'Assessment recorded!',
         noAthleteFound: 'Athlete not found',
+
+        // Error messages
         cameraError: 'Camera access denied or unavailable',
+        cameraPermissionDenied: 'Camera permission denied. Please allow camera access in Settings.',
         voiceNotSupported: 'Voice input not supported in this browser',
         micPermDenied: 'Microphone permission denied',
+        micPermissionDenied: 'Microphone permission denied. Please allow mic access in Settings.',
+        noSpeechDetected: 'No speech detected. Tap the mic and speak clearly.',
+        networkError: 'Speech recognition needs internet. Type your answer instead.',
+        saveError: 'Failed to save data. Please try again.',
 
         // Voice
         tapToSpeak: 'Tap to speak',
         listening: 'Listening...',
         speakNow: 'Speak now...',
         voiceInput: 'Voice Input',
+
+        // Demo
+        demoModeBanner: "You're in demo mode — registration data is stored locally",
     },
 
     ta: {
@@ -206,35 +255,68 @@ const translations = {
         mq15: 'சலிப்பான பயிற்சிகளுக்கு உறுதியாக இருக்க முடியுமா?',
 
         // Scale labels
-        scale1: 'முற்றிலும் உடன்படவில்லை',
-        scale2: 'உடன்படவில்லை',
-        scale3: 'நடுநிலை',
-        scale4: 'உடன்படுகிறேன்',
-        scale5: 'முற்றிலும் உடன்படுகிறேன்',
+        scale1: 'ஒருபோதும் இல்லை',
+        scale2: 'அரிதாக',
+        scale3: 'சில நேரங்களில்',
+        scale4: 'அடிக்கடி',
+        scale5: 'எப்போதும்',
+
+        // Mental result messages
+        championMindset: 'சாம்பியன் மனநிலை! 🏆',
+        strongPotential: 'வலுவான திறன்! 💪',
+        growingAthlete: 'வளரும் வீரர் 🌱',
+        keepTraining: 'பயிற்சியைத் தொடருங்கள்! 🎯',
 
         // Schemes
         schemesTitle: 'அரசு விளையாட்டுத் திட்டங்கள்',
         schemesSubtitle: 'நீங்கள் தகுதி பெறக்கூடிய திட்டங்கள்',
+        schemesMatched: 'நீங்கள் தகுதி பெறும் திட்டங்கள்',
         youQualify: 'நீங்கள் தகுதி பெறுகிறீர்கள்! ✓',
         learnMore: 'மேலும் அறிய',
+        applyNow: 'விண்ணப்பிக்க →',
         benefit: 'பயன்',
         eligibility: 'தகுதி',
-        noSchemes: 'பொருந்தும் திட்டங்களைக் காண சுயவிவரத்தை நிறைவு செய்யவும்',
+        noSchemes: 'பொருத்தமான திட்டங்களைக் காண உங்கள் சுயவிவரத்தை நிறைவு செய்யுங்கள்',
+        totalPotentialValue: 'மொத்த சாத்தியமான மதிப்பு',
 
         // Profile
+        viewProfile: 'சுயவிவரத்தைக் காண',
         talentRating: 'திறமை மதிப்பீடு',
+        totalAssessments: 'மொத்த மதிப்பீடுகள்',
+        communityVerified: 'சமூக சரிபார்ப்பு',
         assessments: 'மதிப்பீடுகள்',
         verified: 'சரிபார்க்கப்பட்டது',
         pending: 'நிலுவையில்',
         share: 'சுயவிவரத்தைப் பகிர்',
+        shareProfile: 'சுயவிவரத்தைப் பகிர்',
         shareSuccess: 'சுயவிவர இணைப்பு நகலெடுக்கப்பட்டது!',
+        copiedToClipboard: 'கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது!',
         editProfile: 'சுயவிவரத்தைத் திருத்து',
         newAssessment: 'புதிய மதிப்பீடு',
+        firstAssessmentCTA: 'உங்கள் முதல் மதிப்பீட்டைப் பதிவு செய்யுங்கள் →',
+        rankInDistrict: 'மாவட்டத்தில் தரவரிசை',
+
+        // Passport
         digitalPassport: 'டிஜிட்டல் திறமை கடவுச்சீட்டு',
+        talentPassport: 'திறமை கடவுச்சீட்டு',
         downloadPassport: 'கடவுச்சீட்டைப் பதிவிறக்கு',
+        downloadCard: 'அட்டையைப் பதிவிறக்கு',
         printPassport: 'கடவுச்சீட்டை அச்சிடு',
+        printCard: 'அட்டையை அச்சிடு',
+        scanToVerify: 'சரிபார்க்க ஸ்கேன் செய்யவும்',
+        generatedOn: 'உருவாக்கப்பட்ட தேதி',
         athleteProfile: 'வீரர் சுயவிவரம்',
         overallScore: 'ஒட்டுமொத்த மதிப்பெண்',
+
+        // Photo
+        photoCapture: 'புகைப்படம் எடு',
+        retakePhoto: 'மீண்டும் எடு',
+        uploadFromGallery: 'கேலரியிலிருந்து பதிவேற்றவும்',
+
+        // Steps
+        step: 'படி',
+        of: 'இல்',
+        reviewSubmit: 'மதிப்பாய்வு & சமர்ப்பி',
 
         // Common
         save: 'சேமி',
@@ -248,6 +330,11 @@ const translations = {
         offline: 'நீங்கள் ஆஃப்லைனில் உள்ளீர்கள். தரவு உள்ளூரில் சேமிக்கப்பட்டது.',
         retry: 'மீண்டும் முயற்சி',
         close: 'மூடு',
+        edit: 'திருத்து',
+        tryAgain: 'மீண்டும் முயற்சி செய்',
+        typeInstead: '⌨️ தட்டச்சு செய்',
+        registerAnother: 'மற்றொரு பதிவு',
+        athleteRegistered: '🎉 வீரர் பதிவு செய்யப்பட்டார்!',
 
         // Status messages
         registerSuccess: 'வீரர் வெற்றிகரமாக பதிவு செய்யப்பட்டார்!',
@@ -255,21 +342,31 @@ const translations = {
         mentalComplete: 'மன மதிப்பீடு நிறைவடைந்தது!',
         assessmentRecorded: 'மதிப்பீடு பதிவு செய்யப்பட்டது!',
         noAthleteFound: 'வீரர் கிடைக்கவில்லை',
+
+        // Error messages
         cameraError: 'கேமரா அணுகல் மறுக்கப்பட்டது அல்லது கிடைக்கவில்லை',
+        cameraPermissionDenied: 'கேமரா அனுமதி மறுக்கப்பட்டது. அமைப்புகளில் கேமரா அணுகலை அனுமதிக்கவும்.',
         voiceNotSupported: 'இந்த உலாவியில் குரல் உள்ளீடு ஆதரிக்கப்படவில்லை',
         micPermDenied: 'மைக்ரோஃபோன் அனுமதி மறுக்கப்பட்டது',
+        micPermissionDenied: 'மைக்ரோஃபோன் அனுமதி மறுக்கப்பட்டது. அமைப்புகளில் மைக் அணுகலை அனுமதிக்கவும்.',
+        noSpeechDetected: 'பேச்சு கண்டறியப்படவில்லை. மைக்கை தட்டி தெளிவாக பேசுங்கள்.',
+        networkError: 'குரல் அறிதல் இணையம் தேவை. தட்டச்சு செய்யுங்கள்.',
+        saveError: 'தரவைச் சேமிக்க இயலவில்லை. மீண்டும் முயற்சிக்கவும்.',
 
         // Voice
         tapToSpeak: 'பேச தட்டவும்',
         listening: 'கேட்கிறது...',
         speakNow: 'இப்போது பேசுங்கள்...',
         voiceInput: 'குரல் உள்ளீடு',
+
+        // Demo
+        demoModeBanner: 'நீங்கள் டெமோ பயன்முறையில் உள்ளீர்கள் — பதிவுத் தரவு உள்ளூரில் சேமிக்கப்படும்',
     },
 };
 
 /**
- * Translation helper — returns the string for a given key and language
- * Supports dot notation for nested keys (e.g., 'nav.home')
+ * Translation helper — returns the string for a given key and language.
+ * Falls back to English, then returns the key itself if not found (no crash).
  * @param {string} key - translation key
  * @param {string} lang - 'en' or 'ta'
  * @returns {string}

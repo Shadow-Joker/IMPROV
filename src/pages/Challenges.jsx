@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Trophy, Filter } from 'lucide-react';
+import { Trophy, Filter, Activity, Flame, Medal } from 'lucide-react';
 import { createChallenge, SPORTS, AGE_GROUPS } from '../utils/dataShapes';
 import ChallengeCard from '../components/assessment/ChallengeCard';
 
@@ -12,13 +12,14 @@ const DEMO_CHALLENGES = [
     testType: '60m_sprint',
     ageGroup: 'U-16',
     district: 'Dharmapuri',
-    startDate: Date.now(),
-    endDate: new Date('2026-02-28').getTime(),
+    startDate: Date.now() - (2 * 24 * 60 * 60 * 1000), // Started 2 days ago
+    endDate: Date.now() + (2 * 24 * 60 * 60 * 1000), // Ends in 2 days (Urgent)
     entries: [
-      { name: 'Murugan K.', value: 7.8, unit: 's' },
-      { name: 'Surya P.', value: 8.1, unit: 's' },
-      { name: 'Ravi D.', value: 8.5, unit: 's' },
-      { name: 'Karthik V.', value: 8.9, unit: 's' },
+      { name: 'Murugan K.', value: 7.8, unit: 's', athleteId: '1' },
+      { name: 'Surya P.', value: 8.1, unit: 's', athleteId: '2' },
+      { name: 'Ravi D.', value: 8.5, unit: 's', athleteId: '3' },
+      { name: 'Karthik V.', value: 8.9, unit: 's', athleteId: '4' },
+      { name: 'Mani S.', value: 9.2, unit: 's', athleteId: '5' },
     ],
     status: 'active',
   }),
@@ -29,12 +30,12 @@ const DEMO_CHALLENGES = [
     testType: 'standing_broad_jump',
     ageGroup: 'U-14',
     district: 'Salem',
-    startDate: Date.now(),
-    endDate: new Date('2026-02-28').getTime(),
+    startDate: Date.now() - (5 * 24 * 60 * 60 * 1000),
+    endDate: Date.now() + (12 * 24 * 60 * 60 * 1000),
     entries: [
-      { name: 'Saranya T.', value: 2.45, unit: 'm' },
-      { name: 'Priya M.', value: 2.3, unit: 'm' },
-      { name: 'Anitha B.', value: 2.15, unit: 'm' },
+      { name: 'Saranya T.', value: 2.45, unit: 'm', athleteId: '6' },
+      { name: 'Priya M.', value: 2.3, unit: 'm', athleteId: '7' },
+      { name: 'Anitha B.', value: 2.15, unit: 'm', athleteId: '8' },
     ],
     status: 'active',
   }),
@@ -46,10 +47,10 @@ const DEMO_CHALLENGES = [
     ageGroup: 'U-18',
     district: 'Madurai',
     startDate: Date.now(),
-    endDate: new Date('2026-02-28').getTime(),
+    endDate: Date.now() + (20 * 24 * 60 * 60 * 1000),
     entries: [
-      { name: 'Arjun S.', value: 125, unit: 'km/h' },
-      { name: 'Ravi D.', value: 118, unit: 'km/h' },
+      { name: 'Arjun S.', value: 125, unit: 'km/h', athleteId: '9' },
+      { name: 'Ravi D.', value: 118, unit: 'km/h', athleteId: '3' },
     ],
     status: 'active',
   }),
@@ -60,14 +61,14 @@ const DEMO_CHALLENGES = [
     testType: 'pushups_60s',
     ageGroup: 'U-16',
     district: 'Coimbatore',
-    startDate: Date.now(),
-    endDate: new Date('2026-02-28').getTime(),
+    startDate: Date.now() - (1 * 24 * 60 * 60 * 1000),
+    endDate: Date.now() + (7 * 24 * 60 * 60 * 1000),
     entries: [
-      { name: 'Ravi D.', value: 52, unit: 'count' },
-      { name: 'Surya P.', value: 48, unit: 'count' },
-      { name: 'Karthik V.', value: 45, unit: 'count' },
-      { name: 'Murugan K.', value: 40, unit: 'count' },
-      { name: 'Arjun S.', value: 38, unit: 'count' },
+      { name: 'Ravi D.', value: 52, unit: 'count', athleteId: '3' },
+      { name: 'Surya P.', value: 48, unit: 'count', athleteId: '2' },
+      { name: 'Karthik V.', value: 45, unit: 'count', athleteId: '4' },
+      { name: 'Murugan K.', value: 40, unit: 'count', athleteId: '1' },
+      { name: 'Arjun S.', value: 38, unit: 'count', athleteId: '9' },
     ],
     status: 'active',
   }),
@@ -78,12 +79,13 @@ const DEMO_CHALLENGES = [
     testType: 'shuttle_run_4x10m',
     ageGroup: 'U-14',
     district: 'Thanjavur',
-    startDate: Date.now(),
-    endDate: new Date('2026-02-28').getTime(),
+    startDate: Date.now() - (10 * 24 * 60 * 60 * 1000),
+    endDate: Date.now() + (1 * 24 * 60 * 60 * 1000), // Ends in 1 day (Urgent)
     entries: [
-      { name: 'Priya M.', value: 10.2, unit: 's' },
-      { name: 'Divya K.', value: 10.8, unit: 's' },
-      { name: 'Saranya T.', value: 11.3, unit: 's' },
+      { name: 'Priya M.', value: 10.2, unit: 's', athleteId: '7' },
+      { name: 'Divya K.', value: 10.8, unit: 's', athleteId: '10' },
+      { name: 'Saranya T.', value: 11.3, unit: 's', athleteId: '6' },
+      { name: 'Anitha B.', value: 12.1, unit: 's', athleteId: '8' },
     ],
     status: 'active',
   }),
@@ -106,104 +108,104 @@ export default function Challenges() {
     });
   }, [sportFilter, ageFilter, districtFilter]);
 
+  // Derived stats for header
+  const totalEntries = filtered.reduce((acc, ch) => acc + (ch.entries?.length || 0), 0);
+  const hotChallenges = filtered.filter(ch => {
+    const daysLeft = Math.max(0, Math.ceil((ch.endDate - Date.now()) / (1000 * 60 * 60 * 24)));
+    return daysLeft <= 3 && ch.entries?.length > 3;
+  }).length;
+
   return (
-    <div className="animate-fade-in">
-      {/* Header */}
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-sm">
-          <Trophy size={28} color="var(--accent-gold)" />
-          District Challenges
+    <div className="animate-fade-in pb-2xl">
+      {/* Header Deck */}
+      <div className="page-header mb-xl relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(234,179,8,0.1) 0%, rgba(0,0,0,0) 100%)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-2xl) var(--space-xl)', border: '1px solid rgba(234,179,8,0.2)' }}>
+        <div className="absolute top-0 right-0 -mr-10 -mt-10 opacity-20" style={{ transform: 'rotate(15deg)' }}>
+          <Trophy size={200} color="var(--accent-gold)" />
+        </div>
+
+        <h1 className="page-title flex items-center gap-sm text-gradient-gold mb-sm" style={{ fontSize: '2.5rem' }}>
+          <Trophy size={36} color="var(--accent-gold)" />
+          District Tournaments
         </h1>
-        <p className="page-subtitle">Compete with athletes in your district</p>
-      </div>
+        <p className="text-secondary mb-lg max-w-md">Rise to the top of the leaderboards by completing highly competitive regional skill challenges.</p>
 
-      {/* Filters */}
-      <div className="glass-card-static mb-lg">
-        <div className="flex items-center gap-sm mb-md">
-          <Filter size={16} color="var(--text-muted)" />
-          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
-            Filters
-          </span>
-        </div>
-        <div className="flex gap-md flex-wrap">
-          {/* Sport filter */}
-          <div className="form-group" style={{ flex: 1, minWidth: '140px', marginBottom: 0 }}>
-            <label className="form-label">Sport</label>
-            <select
-              className="form-select"
-              value={sportFilter}
-              onChange={e => setSportFilter(e.target.value)}
-            >
-              <option value="All">All Sports</option>
-              {SPORTS.map(s => (
-                <option key={s} value={s}>{s.replace('_', ' ')}</option>
-              ))}
-            </select>
+        <div className="flex gap-md">
+          <div className="flex items-center gap-xs bg-black/40 px-md py-xs rounded-full border border-white/10">
+            <Activity size={16} className="text-indigo-400" />
+            <span className="font-bold text-white">{totalEntries}</span>
+            <span className="text-muted text-xs uppercase tracking-wide">Athletes Competing</span>
           </div>
-
-          {/* Age group filter */}
-          <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
-            <label className="form-label">Age Group</label>
-            <select
-              className="form-select"
-              value={ageFilter}
-              onChange={e => setAgeFilter(e.target.value)}
-            >
-              <option value="All">All Ages</option>
-              {AGE_GROUPS.map(a => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* District filter */}
-          <div className="form-group" style={{ flex: 1, minWidth: '140px', marginBottom: 0 }}>
-            <label className="form-label">District</label>
-            <select
-              className="form-select"
-              value={districtFilter}
-              onChange={e => setDistrictFilter(e.target.value)}
-            >
-              {DISTRICTS.map(d => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-          </div>
+          {hotChallenges > 0 && (
+            <div className="flex items-center gap-xs bg-red-500/20 px-md py-xs rounded-full border border-red-500/30">
+              <Flame size={16} className="text-red-400 animate-pulse" />
+              <span className="font-bold text-red-100">{hotChallenges}</span>
+              <span className="text-red-300 text-xs uppercase tracking-wide">Ending Soon</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Results count */}
-      <div className="flex justify-between items-center mb-md">
-        <span className="text-secondary" style={{ fontSize: '0.85rem' }}>
-          Showing {filtered.length} challenge{filtered.length !== 1 ? 's' : ''}
-        </span>
-        {(sportFilter !== 'All' || ageFilter !== 'All' || districtFilter !== 'All') && (
-          <button
-            className="btn btn-ghost"
-            onClick={() => { setSportFilter('All'); setAgeFilter('All'); setDistrictFilter('All'); }}
-            style={{ fontSize: '0.8rem' }}
-          >
-            Clear Filters ✕
-          </button>
-        )}
+      {/* Control Panel / Filters */}
+      <div className="glass-card-static mb-xl sticky top-0 z-30 shadow-lg" style={{ backdropFilter: 'blur(20px)' }}>
+        <div className="flex items-center justify-between mb-sm">
+          <div className="flex items-center gap-sm">
+            <Filter size={18} color="var(--text-muted)" />
+            <span className="text-white font-bold tracking-wide">Live Radar Filters</span>
+          </div>
+          {(sportFilter !== 'All' || ageFilter !== 'All' || districtFilter !== 'All') && (
+            <button
+              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest font-bold"
+              onClick={() => { setSportFilter('All'); setAgeFilter('All'); setDistrictFilter('All'); }}
+            >
+              Clear All ✕
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-3 gap-md">
+          <div className="form-group mb-0">
+            <select className="form-select bg-black/40 border-white/10 w-full" value={sportFilter} onChange={e => setSportFilter(e.target.value)}>
+              <option value="All">🏆 All Disciplines</option>
+              {SPORTS.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+            </select>
+          </div>
+          <div className="form-group mb-0">
+            <select className="form-select bg-black/40 border-white/10 w-full" value={ageFilter} onChange={e => setAgeFilter(e.target.value)}>
+              <option value="All">👥 All Age Groups</option>
+              {AGE_GROUPS.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
+          <div className="form-group mb-0">
+            <select className="form-select bg-black/40 border-white/10 w-full" value={districtFilter} onChange={e => setDistrictFilter(e.target.value)}>
+              <option value="All">📍 All Districts</option>
+              {DISTRICTS.filter(d => d !== 'All').map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+        </div>
       </div>
 
-      {/* Challenge Grid */}
+      {/* Challenge Grid Map */}
       {filtered.length > 0 ? (
-        <div className="grid grid-2">
+        <div className="grid grid-2 gap-lg">
           {filtered.map((challenge, index) => (
-            <div key={challenge.id} className={`animate-fade-in stagger-${Math.min(index + 1, 5)}`}>
+            <div key={challenge.id} className={`animate-slide-up hover:-translate-y-1 transition-transform duration-300`} style={{ animationDelay: `${index * 0.1}s` }}>
               <ChallengeCard challenge={challenge} />
             </div>
           ))}
         </div>
       ) : (
-        <div className="glass-card text-center" style={{ padding: 'var(--space-3xl)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>🔍</div>
-          <h3 className="heading-3 mb-sm">No Challenges Found</h3>
-          <p className="text-secondary">
-            Try adjusting your filters to see more challenges.
+        <div className="glass-card text-center p-3xl mt-xl border-dashed border-white/10">
+          <Medal size={64} className="mx-auto text-indigo-500/30 mb-md opacity-50" />
+          <h3 className="heading-3 mb-sm text-white">No Tournaments Discovered</h3>
+          <p className="text-secondary max-w-sm mx-auto">
+            Broaden your radar parameters or check back soon when new grassroots districts initiate challenges.
           </p>
+          <button
+            className="btn btn-primary mt-lg"
+            onClick={() => { setSportFilter('All'); setAgeFilter('All'); setDistrictFilter('All'); }}
+          >
+            Reset Radar Sweep
+          </button>
         </div>
       )}
     </div>

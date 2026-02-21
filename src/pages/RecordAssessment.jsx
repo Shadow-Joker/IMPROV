@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Timer, CheckCircle, ChevronRight, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Timer, CheckCircle, ChevronRight, AlertTriangle, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { toast } from '../components/shared/Toast';
 import { DEMO_ATHLETES } from '../utils/dataShapes';
 import { SPORT_ICONS } from '../utils/sportMetrics';
 import { generateHash } from '../utils/hashVerify';
@@ -148,6 +149,7 @@ export default function RecordAssessment() {
     }
 
     if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+    toast.success('Assessment saved successfully!');
 
     // Task 1: Automatically redirect to profile
     if (!navigator.onLine) {
@@ -301,6 +303,9 @@ export default function RecordAssessment() {
       {/* Dynamic Header */}
       <div className="page-header sticky top-0 bg-background/90 backdrop-blur z-40 py-md mb-xl" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', margin: '-16px -16px 24px -16px', padding: '16px' }}>
         <h1 className="page-title flex items-center gap-sm mb-xs" style={{ fontSize: '1.5rem' }}>
+          <button className="btn btn-ghost p-xs" onClick={() => navigate(-1)} style={{ marginRight: '4px' }}>
+            <ArrowLeft size={20} />
+          </button>
           <Timer size={24} color="var(--accent-primary)" />
           {step < 3 ? 'Assessment Setup' : 'Live Assessment Active'}
         </h1>

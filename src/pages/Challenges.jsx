@@ -162,7 +162,7 @@ export default function Challenges() {
           )}
         </div>
 
-        <div className="grid grid-3 gap-md">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: 'var(--space-md)' }}>
           <div className="form-group mb-0">
             <select className="form-select bg-black/40 border-white/10 w-full" value={sportFilter} onChange={e => setSportFilter(e.target.value)}>
               <option value="All">🏆 All Disciplines</option>
@@ -186,7 +186,7 @@ export default function Challenges() {
 
       {/* Challenge Grid Map */}
       {filtered.length > 0 ? (
-        <div className="grid grid-2 gap-lg">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: 'var(--space-lg)' }}>
           {filtered.map((challenge, index) => (
             <div key={challenge.id} className={`animate-slide-up hover:-translate-y-1 transition-transform duration-300`} style={{ animationDelay: `${index * 0.1}s` }}>
               <ChallengeCard challenge={challenge} />

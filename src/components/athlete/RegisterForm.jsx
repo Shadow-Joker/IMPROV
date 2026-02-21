@@ -8,6 +8,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast as globalToast } from '../shared/Toast';
 import {
     User, Calendar, Users, Trophy, MapPin, Camera, CheckCircle,
     ChevronLeft, ChevronRight, Loader, Upload, Star, Edit2
@@ -78,7 +79,7 @@ export default function RegisterForm() {
     const [step, setStep] = useState(1);
     const [slideDir, setSlideDir] = useState('right');
     const [saving, setSaving] = useState(false);
-    const [toast, setToast] = useState(null);
+    const [localToast, setLocalToast] = useState(null);
     const [submitted, setSubmitted] = useState(false);
     const [newAthlete, setNewAthlete] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
@@ -272,11 +273,12 @@ export default function RegisterForm() {
             localStorage.setItem('sentrak_athletes', JSON.stringify(athletes));
             setNewAthlete(athlete);
             setSubmitted(true);
+            globalToast.success('Athlete registered successfully!');
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             // Auto-navigate after 3 seconds
             setTimeout(() => navigate(`/profile/${athlete.id}`), 3000);
         } catch {
-            setToast(t('saveError', language));
+            setLocalToast(t('saveError', language));
             setSaving(false);
         }
     };
@@ -825,9 +827,9 @@ export default function RegisterForm() {
             </div>
 
             {/* Toast */}
-            {toast && (
+            {localToast && (
                 <div className="toast toast-success animate-slide-up">
-                    {toast}
+                    {localToast}
                 </div>
             )}
 

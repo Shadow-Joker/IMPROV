@@ -10,11 +10,11 @@ import { useState } from 'react';
 import { Share2, Shield, Star, MapPin, Trophy, Activity, User, Award, ChevronRight } from 'lucide-react';
 import { getRatingTier, DEMO_ASSESSMENTS } from '../../utils/dataShapes';
 import { t } from '../../utils/translations';
+import { toast } from '../shared/Toast';
 import MentalRadarChart from './MentalRadarChart';
 import SchemesMatcher from './SchemesMatcher';
 
 export default function ProfileCard({ athlete, language = 'en' }) {
-    const [shareToast, setShareToast] = useState(false);
 
     if (!athlete) return null;
 
@@ -36,14 +36,12 @@ export default function ProfileCard({ athlete, language = 'en' }) {
                 await navigator.share(shareData);
             } else {
                 await navigator.clipboard.writeText(url);
-                setShareToast(true);
-                setTimeout(() => setShareToast(false), 2000);
+                toast.info('Link copied to clipboard!');
             }
         } catch {
             try {
                 await navigator.clipboard.writeText(url);
-                setShareToast(true);
-                setTimeout(() => setShareToast(false), 2000);
+                toast.info('Link copied to clipboard!');
             } catch { /* noop */ }
         }
     };
@@ -228,13 +226,6 @@ export default function ProfileCard({ athlete, language = 'en' }) {
             >
                 <Share2 size={18} /> {t('shareProfile', language)}
             </button>
-
-            {/* Share toast */}
-            {shareToast && (
-                <div className="toast toast-success animate-slide-up" style={{ position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)' }}>
-                    ✓ {t('copiedToClipboard', language)}
-                </div>
-            )}
         </div>
     );
 }

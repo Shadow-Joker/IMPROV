@@ -6,12 +6,13 @@
    Owner: Rahul (feat/athlete)
    ======================================== */
 
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { User, ClipboardList, Brain, CreditCard, AlertTriangle, UserPlus } from 'lucide-react';
+import { User, ClipboardList, Brain, CreditCard, AlertTriangle, UserPlus, ArrowLeft } from 'lucide-react';
 import { DEMO_ATHLETES } from '../utils/dataShapes';
 import { t } from '../utils/translations';
 import { getSyncQueue, getAssessmentsByAthlete } from '../utils/offlineDB';
+import { scoreAthlete, loadBenchmarks } from '../utils/talentScoring';
 import ProfileCard from '../components/athlete/ProfileCard';
 import QRPassport from '../components/athlete/QRPassport';
 import MentalProfileForm from '../components/athlete/MentalProfileForm';
@@ -66,6 +67,7 @@ function ProfileSkeleton() {
 function AthleteProfileContent() {
   const { id } = useParams();
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const [athlete, setAthlete] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showMentalForm, setShowMentalForm] = useState(false);
@@ -119,6 +121,18 @@ function AthleteProfileContent() {
 
           if (allAssessments.length > 0) {
             currentAthlete = { ...currentAthlete, assessments: allAssessments };
+
+            // Recalculate talent rating from assessments
+            try {
+              const benchmarks = await loadBenchmarks();
+              const { rating } = scoreAthlete(currentAthlete, benchmarks);
+              currentAthlete.talentRating = rating;
+            } catch {
+              // Fallback: 1000 + (avgPercentile * 15)
+              const percs = allAssessments.map(a => a.percentile || 50);
+              const avgP = percs.reduce((s, p) => s + p, 0) / percs.length;
+              currentAthlete.talentRating = Math.round(1000 + avgP * 15);
+            }
           }
         } catch (e) { }
 
@@ -206,12 +220,17 @@ function AthleteProfileContent() {
   return (
     <div className="animate-fade-in">
       <div className="page-header flex justify-between items-center">
-        <div>
-          <h1 className="page-title flex items-center gap-sm">
-            <User size={28} color="var(--accent-primary)" />
-            {t('athleteProfile', language)}
-          </h1>
-          <p className="page-subtitle">{athlete.name}</p>
+        <div className="flex items-center gap-sm">
+          <button className="btn btn-ghost p-xs" onClick={() => navigate(-1)}>
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="page-title flex items-center gap-sm">
+              <User size={28} color="var(--accent-primary)" />
+              {t('athleteProfile', language)}
+            </h1>
+            <p className="page-subtitle">{athlete.name}</p>
+          </div>
         </div>
         <LanguageToggle />
       </div>

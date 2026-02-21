@@ -18,7 +18,7 @@ export default function BottomNav() {
         <Link
           key={item.to}
           to={item.to}
-          className={`bottom-nav-item ${location.pathname === item.to ? 'active' : ''}`}
+          className={`bottom-nav-item ${item.to === '/' ? location.pathname === '/' ? 'active' : '' : location.pathname.startsWith(item.to) ? 'active' : ''}`}
         >
           <item.icon size={22} />
           <span>{item.label}</span>

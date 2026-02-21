@@ -67,6 +67,10 @@ export async function getAllAthletesFromCloud() {
   }
 }
 
+// Aliases for build compatibility
+export const getAthleteById = getAthleteFromCloud;
+export const getCloudAthletes = getAllAthletesFromCloud;
+
 export async function getAthletesByCoach(coachUid) {
   try {
     const q = query(collection(db, 'athletes'), where('registeredBy', '==', coachUid));
@@ -105,6 +109,8 @@ export async function getAssessmentsByAthleteCloud(athleteId) {
     return [];
   }
 }
+
+export const getAssessmentsByAthleteId = getAssessmentsByAthleteCloud;
 
 // ========================================
 // Certificates (SenPass)

@@ -3,6 +3,31 @@ import { createAttestation } from '../../utils/dataShapes';
 import { generateHash } from '../../utils/hashVerify';
 import { Shield, CheckCircle, Phone, User, Fingerprint, Lock, ShieldCheck, Mail, Send } from 'lucide-react';
 
+const ConfettiBurst = () => (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999, overflow: 'hidden' }}>
+        {Array.from({ length: 40 }).map((_, i) => (
+            <div key={i} style={{
+                position: 'absolute',
+                top: '-20px',
+                left: `${Math.random() * 100}%`,
+                width: `${Math.random() * 10 + 5}px`,
+                height: `${Math.random() * 10 + 5}px`,
+                backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#06b6d4', '#ef4444'][Math.floor(Math.random() * 5)],
+                animation: `confetti-fall ${Math.random() * 2 + 1.5}s linear forwards`,
+                animationDelay: `${Math.random() * 0.2}s`,
+                opacity: 0,
+                transform: `rotate(${Math.random() * 360}deg)`
+            }} />
+        ))}
+        <style>{`
+            @keyframes confetti-fall {
+                0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+                100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+            }
+        `}</style>
+    </div>
+);
+
 /**
  * AttestationForm — 3 witness verification slots with OTP and Hash visualization
  * Props: { assessmentId, baseAssessment, onComplete(attestations[], hash) }
@@ -127,7 +152,7 @@ export default function AttestationForm({ assessmentId, baseAssessment = { athle
                     textAlign: 'center'
                 }}>
                     <ShieldCheck size={48} color="var(--accent-success)" style={{ margin: '0 auto var(--space-sm)' }} />
-                    <h3 className="heading-3 mb-sm" style={{ color: 'var(--accent-success)' }}>100% Community Verified</h3>
+                    <h3 className="heading-3 mb-sm" style={{ color: 'var(--accent-success)' }}>100% COMMUNITY VERIFIED ✓</h3>
 
                     <div style={{
                         background: 'var(--bg-tertiary)',
@@ -145,6 +170,8 @@ export default function AttestationForm({ assessmentId, baseAssessment = { athle
                         </span>
                         <Lock size={14} color="var(--accent-success)" />
                     </div>
+                    {/* Render CSS Confetti */}
+                    <ConfettiBurst />
                 </div>
             )}
 
@@ -176,11 +203,11 @@ export default function AttestationForm({ assessmentId, baseAssessment = { athle
             )}
 
             {/* Witness Slots */}
-            <div className="flex flex-col gap-lg mb-xl">
+            <div className={`flex flex-col md:flex-row gap-lg mb-xl w-full ${allVerified ? 'animate-glow' : ''}`}>
                 {witnesses.map((w, i) => {
                     if (w.verified && !allVerified) {
                         return (
-                            <div key={i} className="glass-card flex justify-between items-center animate-scale-in" style={{ borderLeft: '4px solid var(--accent-success)', padding: 'var(--space-md) var(--space-lg)' }}>
+                            <div key={i} className="glass-card flex justify-between items-center animate-scale-in" style={{ flex: 1, borderTop: '4px solid var(--accent-success)', borderLeft: '1px solid var(--accent-success)', padding: 'var(--space-md) var(--space-sm)' }}>
                                 <div className="flex items-center gap-md">
                                     <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '10px', borderRadius: '50%' }}>
                                         <CheckCircle size={20} color="var(--accent-success)" />
@@ -200,15 +227,16 @@ export default function AttestationForm({ assessmentId, baseAssessment = { athle
                     return (
                         <div
                             key={i}
-                            className="glass-card-static animate-fade-in"
+                            className={`glass-card-static animate-fade-in ${w.verified ? 'animate-glow' : ''}`}
                             style={{
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                background: 'var(--bg-glass)',
+                                flex: 1,
+                                border: w.verified ? '2px solid var(--accent-success)' : '1px solid rgba(255, 255, 255, 0.08)',
+                                background: w.verified ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-glass)',
                                 position: 'relative',
                                 overflow: 'hidden'
                             }}
                         >
-                            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--accent-secondary)' }} />
+                            {!w.verified && <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--accent-secondary)' }} />}
 
                             <div className="flex justify-between items-center mb-md">
                                 <h4 className="heading-3 flex items-center gap-sm">
@@ -266,21 +294,43 @@ export default function AttestationForm({ assessmentId, baseAssessment = { athle
                                     </p>
 
                                     <div className="flex justify-center gap-xs my-sm">
-                                        {/* Simulated 6 box inputs */}
-                                        <input
-                                            type="tel"
-                                            value={w.otp}
-                                            onChange={e => updateWitness(i, 'otp', e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                            inputMode="numeric"
-                                            autoFocus
-                                            placeholder="------"
-                                            style={{
-                                                width: '180px', height: '60px',
-                                                background: 'var(--bg-tertiary)', border: '2px solid var(--accent-primary)', borderRadius: 'var(--radius-md)',
-                                                color: 'white', fontSize: '2rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.4em', textAlign: 'center',
-                                                boxShadow: '0 0 15px rgba(99, 102, 241, 0.2)'
-                                            }}
-                                        />
+                                        {/* 6 separate digit boxes */}
+                                        {Array.from({ length: 6 }).map((_, digitIdx) => (
+                                            <input
+                                                key={digitIdx}
+                                                id={`otp-${i}-${digitIdx}`}
+                                                type="tel"
+                                                inputMode="numeric"
+                                                maxLength={1}
+                                                value={w.otp[digitIdx] || ''}
+                                                autoFocus={digitIdx === 0}
+                                                onChange={e => {
+                                                    const val = e.target.value.replace(/\D/g, '');
+                                                    const newOtp = w.otp.split('');
+                                                    newOtp[digitIdx] = val;
+                                                    updateWitness(i, 'otp', newOtp.join('').slice(0, 6));
+
+                                                    if (val && digitIdx < 5) {
+                                                        requestAnimationFrame(() => {
+                                                            document.getElementById(`otp-${i}-${digitIdx + 1}`)?.focus();
+                                                        });
+                                                    }
+                                                }}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Backspace' && !w.otp[digitIdx] && digitIdx > 0) {
+                                                        requestAnimationFrame(() => {
+                                                            document.getElementById(`otp-${i}-${digitIdx - 1}`)?.focus();
+                                                        });
+                                                    }
+                                                }}
+                                                style={{
+                                                    width: 'clamp(35px, 10vw, 45px)', height: 'clamp(45px, 12vw, 55px)',
+                                                    background: 'var(--bg-tertiary)', border: '2px solid var(--accent-primary)', borderRadius: 'var(--radius-md)',
+                                                    color: 'white', fontSize: '1.5rem', fontFamily: 'var(--font-mono)', textAlign: 'center',
+                                                    boxShadow: '0 0 10px rgba(99, 102, 241, 0.2)'
+                                                }}
+                                            />
+                                        ))}
                                     </div>
 
                                     <button

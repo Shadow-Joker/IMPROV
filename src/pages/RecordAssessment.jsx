@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Timer, CheckCircle, ChevronRight, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { DEMO_ATHLETES } from '../utils/dataShapes';
 import { SPORT_ICONS } from '../utils/sportMetrics';
@@ -62,6 +62,16 @@ export default function RecordAssessment() {
       }
     }
   }, [athleteId]);
+
+  // Read deep-link query params for sport/challenge presetting
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const sportQuery = searchParams.get('sport');
+    if (sportQuery && step === 1 && selectedAthlete) {
+      setSelectedSport(sportQuery);
+      setStep(2);
+    }
+  }, [searchParams, step, selectedAthlete]);
 
   // Handle Assessment Completion
   const handleAssessmentComplete = useCallback(async (results) => {
@@ -150,33 +160,27 @@ export default function RecordAssessment() {
 
   // UI Components
   const renderStepIndicator = () => (
-    <div className="flex items-center gap-xs mb-xl" style={{ overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
+    <div className="flex items-center justify-between mb-xl w-full" style={{ position: 'relative' }}>
+      <div style={{ position: 'absolute', top: '20px', left: '0', right: '0', height: '2px', background: 'rgba(255,255,255,0.1)', zIndex: 0 }} />
       {STEPS.map((s, i) => (
-        <div key={s.id} className="flex items-center animate-fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
+        <div key={s.id} className="flex flex-col items-center" style={{ position: 'relative', zIndex: 1, flex: 1 }}>
           <div
-            className={`flex items-center gap-xs ${step === i ? 'animate-pulse-slow' : ''}`}
+            className={`transition-all duration-300 ${i === step ? 'animate-glow' : ''}`}
             style={{
-              padding: '6px 14px',
-              background: i === step
-                ? 'var(--accent-primary)'
-                : i < step
-                  ? 'var(--accent-success)'
-                  : 'var(--bg-tertiary)',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              color: i <= step ? 'white' : 'var(--text-muted)',
-              whiteSpace: 'nowrap',
+              width: '40px', height: '40px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: i === step ? 'var(--accent-primary)' : i < step ? 'var(--accent-success)' : 'var(--bg-tertiary)',
+              border: i === step ? '2px solid var(--accent-primary)' : '2px solid rgba(255,255,255,0.05)',
               boxShadow: i === step ? '0 0 15px rgba(99, 102, 241, 0.4)' : 'none',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              color: i <= step ? 'white' : 'var(--text-muted)',
+              fontSize: '1rem', fontWeight: 800
             }}
           >
-            <span style={{ fontSize: '1.2rem' }}>{s.icon}</span>
-            <span className={i === step ? '' : 'hide-mobile'}>{s.label}</span>
+            {i < step ? <CheckCircle size={20} /> : (i + 1)}
           </div>
-          {i < STEPS.length - 1 && (
-            <ChevronRight size={16} color="rgba(255,255,255,0.2)" style={{ margin: '0 4px', flexShrink: 0 }} />
-          )}
+          <span className="mt-xs hide-mobile text-center" style={{ fontSize: '0.75rem', color: i <= step ? 'white' : 'var(--text-muted)', fontWeight: i === step ? 600 : 400 }}>
+            {s.label}
+          </span>
         </div>
       ))}
     </div>
@@ -196,12 +200,13 @@ export default function RecordAssessment() {
             borderRadius: '50%', margin: '0 auto var(--space-lg)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 40px rgba(16, 185, 129, 0.5)',
-            animation: 'scale-up-bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
+            animation: 'scale-up-bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+            transform: 'scale(0)'
           }}>
             <CheckCircle size={56} color="white" />
           </div>
-          <h2 className="heading-2 text-gradient mb-xs">Assessment Finalized</h2>
-          <p className="text-secondary">Secured offline and marked for cloud synchronization.</p>
+          <h2 className="heading-2 text-gradient mb-xs">Assessment Recorded!</h2>
+          <p className="text-secondary">Secured offline and ready for cloud synchronization.</p>
         </div>
 
         <div className="glass-card-static max-w-lg mx-auto p-xl animate-slide-up">
@@ -278,7 +283,21 @@ export default function RecordAssessment() {
   // MAIN WIZARD
   // ═══════════════════════════════════════════════
   return (
-    <div className="animate-fade-in pb-2xl">
+    <div className="animate-fade-in pb-2xl" style={{ paddingBottom: '120px' }}>
+      <style>{`
+        @keyframes custom-slide {
+          from { transform: translateX(20px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        .slide-300ms {
+          animation: custom-slide 300ms ease forwards;
+        }
+        @keyframes scale-up-bounce {
+          0% { transform: scale(0); opacity: 0; }
+          60% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
       {/* Dynamic Header */}
       <div className="page-header sticky top-0 bg-background/90 backdrop-blur z-40 py-md mb-xl" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', margin: '-16px -16px 24px -16px', padding: '16px' }}>
         <h1 className="page-title flex items-center gap-sm mb-xs" style={{ fontSize: '1.5rem' }}>
@@ -300,7 +319,7 @@ export default function RecordAssessment() {
 
         {/* STEP 0: Select Athlete */}
         {step === 0 && (
-          <div className="animate-slide-up">
+          <div className="slide-300ms">
             <h3 className="heading-3 mb-lg text-gradient">Select Target Athlete</h3>
             <div className="flex flex-col gap-md">
               {athletes && athletes.map(athlete => {
@@ -337,7 +356,7 @@ export default function RecordAssessment() {
 
         {/* STEP 1: Select Sport */}
         {step === 1 && (
-          <div className="animate-slide-up">
+          <div className="slide-300ms">
             <h3 className="heading-3 mb-md">Select Sport Discipline</h3>
             <p className="text-secondary mb-lg">Choose the sport category to calibrate assessment benchmarks and available specific tests.</p>
             <SportSelector selected={selectedSport} onSelect={(sport) => { setSelectedSport(sport); setStep(2); }} />
@@ -346,7 +365,7 @@ export default function RecordAssessment() {
 
         {/* STEP 2: Choose Test Mode */}
         {step === 2 && (
-          <div className="animate-slide-in-right">
+          <div className="slide-300ms">
             <h3 className="heading-3 mb-xl text-center">Select Assessment Configuration</h3>
             <div className="flex flex-col md:flex-row gap-lg">
 
@@ -385,7 +404,7 @@ export default function RecordAssessment() {
 
         {/* STEP 3: Run Assessment Battery Widgets */}
         {step === 3 && (
-          <div className="animate-scale-in">
+          <div className="slide-300ms">
             <ErrorBoundary onReset={() => setStep(2)}>
               {testMode === 'sai' ? (
                 <SAITestEngine athleteId={selectedAthlete?.id} athleteInfo={selectedAthlete} onComplete={handleAssessmentComplete} />
@@ -398,14 +417,14 @@ export default function RecordAssessment() {
 
         {/* STEP 4: Network Attestation Form */}
         {step === 4 && (
-          <div className="animate-fade-in relative z-10">
+          <div className="slide-300ms relative z-10">
             <AttestationForm assessmentId={assessmentResults[0]?.id} baseAssessment={assessmentResults[0]} onComplete={handleAttestationComplete} />
           </div>
         )}
 
         {/* STEP 5: Integrity Hash Results Preview */}
         {step === 5 && (
-          <div className="animate-slide-up relative z-10">
+          <div className="slide-300ms relative z-10">
             {isOfflineSave && (
               <div className="glass-card mb-md text-center p-md bg-warning/20 border-warning/40 animate-pulse">
                 <AlertTriangle size={24} className="mx-auto mb-xs text-warning" />
@@ -475,17 +494,26 @@ export default function RecordAssessment() {
 
         {/* STEP 6: Anti-Aliasing Video Capture Component */}
         {step === 6 && (
-          <div className="animate-slide-in-right relative z-10">
+          <div className="slide-300ms relative z-10">
             <VideoClipCapture onCapture={(base64) => { setVideoClip(base64); handleFinalize(base64); }} onSkip={() => handleFinalize(null)} />
           </div>
         )}
 
-        {/* Safety Navigation Back Controls */}
-        {step > 0 && step < 3 && !done && (
-          <div className="mt-2xl flex justify-center">
-            <button className="btn btn-ghost text-muted hover:text-white flex items-center gap-xs transition-colors" onClick={() => setStep(s => Math.max(0, s - 1))}>
-              <ChevronRight size={16} className="rotate-180" /> Modify Previous Step Setup
+        {/* Safety Navigation Back Controls & Next Navigation */}
+        {!done && (
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '16px 24px', background: 'rgba(10, 14, 39, 0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.1)', zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button
+              className="btn btn-ghost text-muted hover:text-white flex items-center gap-xs"
+              style={{ visibility: step > 0 && step < 4 ? 'visible' : 'hidden' }}
+              onClick={() => setStep(s => Math.max(0, s - 1))}
+            >
+              <ChevronRight size={18} className="rotate-180" /> Back
             </button>
+
+            {step === 0 && <button className="btn btn-primary" disabled={!selectedAthlete} onClick={() => setStep(1)}>Next &rarr;</button>}
+            {step === 1 && <button className="btn btn-primary" disabled={!selectedSport} onClick={() => setStep(2)}>Next &rarr;</button>}
+            {step === 2 && <button className="btn btn-primary" disabled={!testMode} onClick={() => setStep(3)}>Next &rarr;</button>}
+            {step === 3 && <button className="btn btn-primary" disabled={assessmentResults.length === 0} onClick={() => handleAssessmentComplete(assessmentResults)}>Next &rarr;</button>}
           </div>
         )}
       </div>

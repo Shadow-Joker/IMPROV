@@ -122,7 +122,7 @@ export default function ChallengeCard({ challenge }) {
 
             {/* Footer Action */}
             <div className="p-md bg-black/60 border-t border-white/10 mt-auto">
-                <Link to={`/assess?challenge=${id}`} className="btn w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold tracking-wide rounded-lg flex items-center justify-between group-hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all">
+                <Link to={`/assess?challenge=${id}&sport=${sport}`} className="btn w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold tracking-wide rounded-lg flex items-center justify-between group-hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all">
                     <span className="flex items-center gap-sm"><Play fill="currentColor" size={16} /> Enter Match </span>
                     <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </Link>

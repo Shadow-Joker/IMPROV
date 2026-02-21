@@ -38,6 +38,11 @@ Types: FEAT | FIX | MERGE | BRANCH | SYNC | DESIGN | DATA
 [19:45 IST] SHARVESH feat/assessment-v3 FEAT — RecordAssessment.jsx: Integrated AI Anomaly Fraud warnings with a forced coach verification opt-in
 [19:50 IST] SHARVESH feat/assessment-v3 FEAT — ErrorBoundary.jsx: React error boundaries safeguarding TestEngine/MetricsRecorder maps
 [19:55 IST] SHARVESH feat/assessment-v3 DESIGN — TimerWidget.jsx & AttestationForm.jsx & RecordAssessment.jsx: Clamped viewport fonts, pinned nav, enforced tel inputs for iPhone UX
+[20:25 IST] SHARVESH feat/assessment-v4 FEAT — TimerWidget.jsx: Added 3-2-1 countdown, scaling numbers, beep AudioContext, pulsing red glow, green flash 
+[20:25 IST] SHARVESH feat/assessment-v4 FEAT — AttestationForm.jsx: 3-witness row layout, 6-digit OTP separated boxes, auto-focus, Confetti burst, green shimmer reveal
+[20:25 IST] SHARVESH feat/assessment-v4 UX — RecordAssessment.jsx: Connected step progress bar, 300ms slide transitions, persistent back/next footer, animated Success loop
+[20:25 IST] SHARVESH feat/assessment-v4 FEAT — ChallengeCard.jsx: Routed URL params `?sport=` auto-triggering `RecordAssessment.jsx` hook configuration
+[20:25 IST] SHARVESH feat/assessment-v4 MOBILE — Resized 80px Stacked Timer inputs, 360px viewport bounding checks, numeric telephone keys
 ```
 
 ### Scout Phase (Uday)

@@ -9,6 +9,7 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
     const [status, setStatus] = useState('ready'); // counting_down | ready | running | stopped
     const [countdown, setCountdown] = useState(0); // 3, 2, 1, 'GO!'
     const [displayTime, setDisplayTime] = useState(0);
+    const [flash, setFlash] = useState(false);
     const [laps, setLaps] = useState([]);
 
     const startTimeRef = useRef(0);
@@ -83,21 +84,22 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
         if (countdownEnabled && elapsedRef.current === 0) {
             setStatus('counting_down');
             setCountdown(3);
-            playBeep(600, 150);
+            playBeep(440, 150);
 
             let count = 3;
             const interval = setInterval(() => {
                 count -= 1;
                 if (count > 0) {
                     setCountdown(count);
-                    playBeep(600, 150);
+                    playBeep(440, 150);
                 } else if (count === 0) {
                     setCountdown('GO!');
+                    playBeep(880, 300);
                     clearInterval(interval);
                     setTimeout(() => {
                         startActualTimer();
                         setCountdown(0);
-                    }, 500);
+                    }, 700);
                 }
             }, 1000);
         } else {
@@ -114,11 +116,13 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
         setDisplayTime(finalTime);
         setStatus('stopped');
 
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        playBeep(440, 300); // lower tone for stop
+        setFlash(true);
+        setTimeout(() => setFlash(false), 300);
+
+        if (navigator.vibrate) navigator.vibrate(100);
 
         if (onStop) onStop(finalTime);
-    }, [status, onStop, playBeep]);
+    }, [status, onStop]);
 
     const handleReset = useCallback(() => {
         cancelAnimationFrame(rafRef.current);
@@ -158,7 +162,14 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
             : 'text-primary';
 
     return (
-        <div className="glass-card-static" style={{ textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div className="glass-card-static flex-col flex items-center justify-center p-xl" style={{
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: status === 'running' ? 'inset 0 0 0 4px rgba(239, 68, 68, 0.4), 0 0 30px rgba(239, 68, 68, 0.2)' : flash ? 'inset 0 0 0 4px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.5)' : 'none',
+            transition: 'box-shadow 0.3s ease',
+            animation: status === 'running' ? 'pulse 1.5s infinite alternate' : 'none'
+        }}>
 
             {/* 3-2-1 Countdown Overlay */}
             {status === 'counting_down' && (
@@ -170,7 +181,7 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
                     borderRadius: 'var(--radius-lg)'
                 }}>
                     <div key={countdown} className="animate-scale-in" style={{
-                        fontSize: countdown === 'GO!' ? '6rem' : '8rem',
+                        fontSize: countdown === 'GO!' ? '6rem' : '5rem',
                         fontWeight: 900,
                         background: countdown === 'GO!' ? 'var(--gradient-hero)' : 'white',
                         WebkitBackgroundClip: 'text',
@@ -198,17 +209,17 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
                 {formatTime(displayTime)}
             </div>
 
-            {/* Control Buttons */}
-            <div className="flex justify-center items-center gap-md" style={{ marginBottom: 'var(--space-lg)' }}>
+            {/* Control Buttons (Stacked vertically on mobile, row on tablet/desktop) */}
+            <div className="flex flex-col md:flex-row justify-center items-center gap-md w-full" style={{ marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
 
-                {/* Reset (Left) */}
+                {/* Reset */}
                 <button
                     className="btn btn-ghost hover-lift"
                     onClick={handleReset}
                     disabled={status === 'running' || status === 'counting_down'}
-                    style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-full)', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ width: '100%', maxWidth: '120px', height: '80px', borderRadius: 'var(--radius-md)', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                    <RotateCcw size={20} />
+                    <RotateCcw size={28} />
                 </button>
 
                 {/* Start / Stop (Center, Huge) */}
@@ -218,7 +229,7 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
                         onClick={handleStart}
                         disabled={status === 'counting_down'}
                         style={{
-                            width: '80px', height: '80px', borderRadius: 'var(--radius-full)',
+                            width: '100%', maxWidth: '240px', height: '80px', borderRadius: 'var(--radius-full)',
                             background: 'var(--accent-success)', color: 'white',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             boxShadow: '0 0 30px rgba(16, 185, 129, 0.4)',
@@ -232,7 +243,7 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
                         className="btn hover-lift"
                         onClick={handleStop}
                         style={{
-                            width: '80px', height: '80px', borderRadius: 'var(--radius-full)',
+                            width: '100%', maxWidth: '240px', height: '80px', borderRadius: 'var(--radius-full)',
                             background: 'var(--accent-danger)', color: 'white',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             boxShadow: '0 0 30px rgba(239, 68, 68, 0.6)',
@@ -244,14 +255,14 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
                     </button>
                 )}
 
-                {/* Lap (Right) */}
+                {/* Lap */}
                 <button
                     className="btn btn-secondary hover-lift"
                     onClick={handleLap}
                     disabled={status !== 'running'}
-                    style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-full)', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ width: '100%', maxWidth: '120px', height: '80px', borderRadius: 'var(--radius-md)', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                    <Flag size={20} />
+                    <Flag size={28} />
                 </button>
 
             </div>

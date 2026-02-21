@@ -19,6 +19,8 @@ import ScoutView from './pages/ScoutView';
 import Challenges from './pages/Challenges';
 import DemoMode from './pages/DemoMode';
 import Settings from './pages/Settings';
+import VerifySenPass from './pages/VerifySenPass';
+import SenBot from './components/chatbot/SenBot';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { isAuthenticated, role, loading } = useAuth();
@@ -132,11 +134,15 @@ function AppRoutes() {
               <DemoMode />
             </ErrorBoundary>
           } />
+          <Route path="/verify/:certId" element={
+            <VerifySenPass />
+          } />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <SenBot />
       <BottomNav />
       <SpeedInsights />
     </div>

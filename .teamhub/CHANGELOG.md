@@ -61,6 +61,20 @@ Types: FEAT | FIX | MERGE | BRANCH | SYNC | DESIGN | DATA
 [19:28 IST] UDAY feat/scout SYNC — Pulled main (Sharvesh assessment-v2 + deploy), merged into feat/scout, all 5 tabs verified working
 ```
 
+### Scout Phase 2 — Polish (Uday)
+
+```
+[20:15 IST] UDAY feat/scout-v2 POLISH — TalentHeatMap: gradient colors (blue→pink), stagger fade-in, scale hover, glassmorphic tooltip
+[20:15 IST] UDAY feat/scout-v2 POLISH — ScoutDashboard: 3 KPI cards (animated counters + sparklines), live ticker, Export Report button
+[20:18 IST] UDAY feat/scout-v2 POLISH — DiscoveryFeed: social feed UX, sport badges, Load More pagination, shortlist/view/offer actions
+[20:18 IST] UDAY feat/scout-v2 POLISH — SearchFilters: multi-select sport pills, iOS-style verified toggle, collapsible panel
+[20:20 IST] UDAY feat/scout-v2 POLISH — AthleteRanking: trend arrows (up/down), Statewide/District toggle, mobile card view
+[20:20 IST] UDAY feat/scout-v2 POLISH — RecruitmentPortal: canvas confetti on offer send, saved/shortlisted athletes section
+[20:22 IST] UDAY feat/scout-v2 POLISH — RevenueCalculator + ScaleMetrics: cleaner layout, Discovery Funnel visualization
+[20:25 IST] UDAY feat/scout-v2 POLISH — ScoutView: wired to demoLoader.getAllAthletes(), multi-sport filter support
+[20:30 IST] UDAY feat/scout-v2 BRANCH — Tagged snapshot/scout-v2-p1 (all polish verified, pushed)
+```
+
 ---
 
 ## Active Snapshot Branches (safe rollback points)
@@ -71,6 +85,7 @@ Types: FEAT | FIX | MERGE | BRANCH | SYNC | DESIGN | DATA
 | `snapshot/scout-v1` | 19:05 | Core search + data + utilities |
 | `snapshot/scout-v2` | 19:05 | Heatmap + Feed + Marketplace |
 | `snapshot/scout-v3-final` | 19:05 | All 14 scout files complete |
+| `snapshot/scout-v2-p1` | 20:30 | Phase 2 polish: KPIs, gradient heatmap, social feed |
 
 ---
 

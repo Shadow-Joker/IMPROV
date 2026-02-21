@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { Timer, CheckCircle, ChevronRight, AlertTriangle } from 'lucide-react';
-import { DEMO_ATHLETES, createAssessment } from '../utils/dataShapes';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Timer, CheckCircle, ChevronRight, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { DEMO_ATHLETES } from '../utils/dataShapes';
 import { SPORT_ICONS } from '../utils/sportMetrics';
 import { generateHash } from '../utils/hashVerify';
 import { checkAnomalies } from '../utils/fraudDetection';
@@ -13,18 +13,21 @@ import AttestationForm from '../components/assessment/AttestationForm';
 import VideoClipCapture from '../components/assessment/VideoClipCapture';
 
 const STEPS = [
-  { label: 'Athlete', icon: '👤' },
-  { label: 'Sport', icon: '🏆' },
-  { label: 'Test Type', icon: '📋' },
-  { label: 'Assessment', icon: '⏱' },
-  { label: 'Verify', icon: '🛡️' },
-  { label: 'Hash', icon: '🔐' },
-  { label: 'Video', icon: '📹' },
+  { label: 'Athlete', icon: '👤', id: 'athlete' },
+  { label: 'Sport', icon: '🏆', id: 'sport' },
+  { label: 'Battery', icon: '📋', id: 'type' },
+  { label: 'Assess', icon: '⏱', id: 'assess' },
+  { label: 'Verify', icon: '🛡️', id: 'attest' },
+  { label: 'Hash', icon: '🔐', id: 'hash' },
+  { label: 'Video', icon: '📹', id: 'video' },
 ];
 
 export default function RecordAssessment() {
   const { athleteId } = useParams();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
+
+  // Assessment State
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [selectedSport, setSelectedSport] = useState('');
   const [testMode, setTestMode] = useState(''); // 'sai' | 'sport_specific'
@@ -35,7 +38,7 @@ export default function RecordAssessment() {
   const [videoClip, setVideoClip] = useState(null);
   const [done, setDone] = useState(false);
 
-  // Load athletes from localStorage + demo
+  // Load athletes from localStorage + fallback to demo DB
   const athletes = (() => {
     try {
       const stored = JSON.parse(localStorage.getItem('sentrak_athletes') || '[]');
@@ -45,107 +48,114 @@ export default function RecordAssessment() {
     }
   })();
 
-  // Pre-select athlete from URL param
+  // Pre-select athlete from URL Routing
   useEffect(() => {
     if (athleteId) {
       const found = athletes.find(a => a.id === athleteId);
       if (found) {
         setSelectedAthlete(found);
-        setStep(1);
+        setStep(1); // Jump to Sport Selection if athlete already known
       }
     }
   }, [athleteId]);
 
-  // After assessment results, generate hash + check anomalies
+  // Handle Assessment Completion
   const handleAssessmentComplete = useCallback(async (results) => {
     setAssessmentResults(results);
 
-    // Check anomalies for each result
+    // Run Fraud Detection Anomalies Scans
     const anomalies = results.map(r => ({
       ...r,
       anomaly: checkAnomalies(r, selectedSport),
     })).filter(r => r.anomaly.isAnomaly);
     setAnomalyReport(anomalies);
 
-    setStep(4);
+    setStep(4); // Move to Attestation
   }, [selectedSport]);
 
-  // After attestation
-  const handleAttestationComplete = useCallback(async (atts) => {
+  // Handle Community Verification 
+  const handleAttestationComplete = useCallback(async (atts, generatedHash) => {
     setAttestations(atts);
 
-    // Generate hash for each assessment with attestation data
-    const firstResult = assessmentResults[0];
-    if (firstResult) {
-      const withAtts = {
-        ...firstResult,
-        attestations: atts.map(a => ({ witnessPhone: a.witnessPhone })),
-      };
-      const h = await generateHash(withAtts);
-      setHash(h);
+    // Dynamic generatedHash payload from child or fallback manual creation
+    if (generatedHash) {
+      setHash(generatedHash);
+    } else {
+      const firstResult = assessmentResults[0];
+      if (firstResult) {
+        const withAtts = {
+          ...firstResult,
+          attestations: atts.map(a => ({ witnessPhone: a.witnessPhone })),
+        };
+        const h = await generateHash(withAtts);
+        setHash(h);
+      }
     }
 
-    setStep(5);
+    setStep(5); // Move to Hash Preview Screen
   }, [assessmentResults]);
 
-  // Save everything to localStorage and IndexedDB
-  const handleFinalize = useCallback(async () => {
-    // Save each assessment
+  // Finalize Workflow: Persist to DBs
+  const handleFinalize = useCallback(async (videoPayload = null) => {
+    const finalVideoObj = videoPayload ? videoPayload : videoClip;
+
     for (const result of assessmentResults) {
       const fullAssessment = {
         ...result,
         attestations: attestations,
         hash: hash,
-        videoClipURL: videoClip || '',
+        videoClipURL: finalVideoObj || '', // Large base64 string
         flags: anomalyReport
           .filter(a => a.id === result.id)
           .flatMap(a => a.anomaly.flags),
       };
 
-      // Save to localStorage
+      // 1) Fallback LocalStorage Saving
       const stored = JSON.parse(localStorage.getItem('sentrak_assessments') || '[]');
       stored.push(fullAssessment);
       localStorage.setItem('sentrak_assessments', JSON.stringify(stored));
 
-      // Save to IndexedDB
+      // 2) IndexedDB Persistent Saving & Sync Queueing
       try {
         await saveAssessment(fullAssessment);
         await addToSyncQueue({ ...fullAssessment, type: 'assessment' });
       } catch (err) {
-        console.error('[RecordAssessment] DB save error:', err);
+        console.error('[RecordAssessment] OfflineDB persistence save error:', err);
       }
     }
 
     setDone(true);
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
   }, [assessmentResults, attestations, hash, videoClip, anomalyReport]);
 
-  // Step navigation
+  // UI Components
   const renderStepIndicator = () => (
-    <div className="flex items-center gap-xs mb-lg" style={{ overflowX: 'auto', paddingBottom: 'var(--space-xs)' }}>
+    <div className="flex items-center gap-xs mb-xl" style={{ overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
       {STEPS.map((s, i) => (
-        <div key={i} className="flex items-center">
+        <div key={s.id} className="flex items-center animate-fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
           <div
-            className="flex items-center gap-xs"
+            className={`flex items-center gap-xs ${step === i ? 'animate-pulse-slow' : ''}`}
             style={{
-              padding: '4px 10px',
+              padding: '6px 14px',
               background: i === step
                 ? 'var(--accent-primary)'
                 : i < step
                   ? 'var(--accent-success)'
                   : 'var(--bg-tertiary)',
               borderRadius: 'var(--radius-full)',
-              fontSize: '0.7rem',
-              fontWeight: 600,
+              fontSize: '0.75rem',
+              fontWeight: 700,
               color: i <= step ? 'white' : 'var(--text-muted)',
               whiteSpace: 'nowrap',
-              transition: 'all var(--transition-normal)',
+              boxShadow: i === step ? '0 0 15px rgba(99, 102, 241, 0.4)' : 'none',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            <span>{s.icon}</span>
-            <span className="hide-mobile">{s.label}</span>
+            <span style={{ fontSize: '1.2rem' }}>{s.icon}</span>
+            <span className={i === step ? '' : 'hide-mobile'}>{s.label}</span>
           </div>
           {i < STEPS.length - 1 && (
-            <ChevronRight size={14} color="var(--text-muted)" style={{ margin: '0 2px', flexShrink: 0 }} />
+            <ChevronRight size={16} color="rgba(255,255,255,0.2)" style={{ margin: '0 4px', flexShrink: 0 }} />
           )}
         </div>
       ))}
@@ -153,94 +163,90 @@ export default function RecordAssessment() {
   );
 
   // ═══════════════════════════════════════════════
-  // DONE STATE
+  // DONE STATE / RECEIPT UI
   // ═══════════════════════════════════════════════
   if (done) {
-    return (
-      <div className="animate-fade-in">
-        <div className="page-header">
-          <h1 className="page-title flex items-center gap-sm">
-            <CheckCircle size={28} color="var(--accent-success)" />
-            Assessment Complete!
-          </h1>
-        </div>
-        <div className="glass-card" style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
-          <div style={{ fontSize: '4rem', marginBottom: 'var(--space-md)', animation: 'float 2s ease-in-out infinite' }}>
-            🎉
-          </div>
-          <h2 className="heading-2 text-gradient mb-md">
-            Assessment Recorded Successfully!
-          </h2>
-          <p className="text-secondary mb-lg">
-            {assessmentResults.length} test(s) recorded for {selectedAthlete?.name}
-          </p>
+    const fraudLevel = anomalyReport.length > 0 ? 'medium' : 'low';
 
-          {/* Summary */}
-          <div className="glass-card-static mb-lg" style={{ textAlign: 'left' }}>
-            <div className="flex flex-col gap-sm">
-              <div className="flex justify-between">
-                <span className="text-muted">Athlete</span>
-                <span className="heading-4">{selectedAthlete?.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted">Sport</span>
-                <span>{SPORT_ICONS[selectedSport]} {selectedSport?.replace('_', ' ')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted">Tests Recorded</span>
-                <span className="text-success">{assessmentResults.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted">Witnesses</span>
-                <span className="text-success">{attestations.length}/3</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted">Hash</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--accent-secondary)', wordBreak: 'break-all' }}>
-                  {hash ? hash.slice(0, 16) + '...' : 'N/A'}
-                </span>
-              </div>
-              {attestations.length === 3 && (
-                <div className="badge badge-verified" style={{ alignSelf: 'center', marginTop: 'var(--space-sm)' }}>
-                  🛡️ Community Verified
-                </div>
+    return (
+      <div className="animate-fade-in" style={{ paddingBottom: '100px' }}>
+        <div className="text-center mb-xl">
+          <div style={{
+            width: '100px', height: '100px', background: 'var(--accent-success)',
+            borderRadius: '50%', margin: '0 auto var(--space-lg)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 40px rgba(16, 185, 129, 0.5)',
+            animation: 'scale-up-bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}>
+            <CheckCircle size={56} color="white" />
+          </div>
+          <h2 className="heading-2 text-gradient mb-xs">Assessment Finalized</h2>
+          <p className="text-secondary">Secured offline and marked for cloud synchronization.</p>
+        </div>
+
+        <div className="glass-card-static max-w-lg mx-auto p-xl animate-slide-up">
+          {/* Athlete Context Header */}
+          <div className="flex items-center gap-md mb-lg pb-md" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--gradient-hero)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 700 }}>
+              {selectedAthlete?.name.charAt(0)}
+            </div>
+            <div>
+              <h3 className="heading-3" style={{ marginBottom: '2px' }}>{selectedAthlete?.name}</h3>
+              <p className="text-muted" style={{ fontSize: '0.85rem' }}>{selectedAthlete?.id} • {selectedAthlete?.district}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-md mb-xl">
+            <div className="flex justify-between items-center bg-black/20 p-md rounded-lg border border-white/5">
+              <span className="text-secondary flex items-center gap-sm"><Timer size={16} /> Tests Performed</span>
+              <span className="text-white font-bold">{assessmentResults.length}</span>
+            </div>
+
+            <div className="flex justify-between items-center bg-black/20 p-md rounded-lg border border-white/5">
+              <span className="text-secondary flex items-center gap-sm">🛡️ Security Level</span>
+              {attestations.length === 3 ? (
+                <span className="badge badge-verified flex gap-xs items-center"><ShieldCheck size={14} /> 3-Auth Verified</span>
+              ) : (
+                <span className="badge badge-pending">Partial ({attestations.length}/3)</span>
               )}
+            </div>
+
+            {/* Cryptographic Hash Segment */}
+            <div className="bg-black/30 p-md rounded-lg border border-indigo-500/30">
+              <div className="text-secondary text-xs mb-xs uppercase tracking-wider">Blockchain-ready Hash Signature</div>
+              <div className="font-mono text-xs text-indigo-400 break-all leading-relaxed p-sm bg-black/50 rounded selection:bg-indigo-500/30">
+                {hash}
+              </div>
             </div>
           </div>
 
           {/* Anomaly warnings */}
-          {anomalyReport.length > 0 && (
-            <div className="glass-card-static mb-lg" style={{
-              textAlign: 'left',
+          {fraudLevel === 'medium' && (
+            <div className="glass-card-static mb-lg animate-fade-in" style={{
               background: 'rgba(245, 158, 11, 0.05)',
               border: '1px solid rgba(245, 158, 11, 0.3)',
             }}>
               <div className="flex items-center gap-sm mb-sm">
-                <AlertTriangle size={16} color="var(--accent-warning)" />
-                <span className="heading-4" style={{ color: 'var(--accent-warning)' }}>Anomaly Flags</span>
+                <AlertTriangle size={18} color="var(--accent-warning)" />
+                <span className="heading-4" style={{ color: 'var(--accent-warning)' }}>AI Review Flagged</span>
               </div>
-              {anomalyReport.map((a, i) => (
-                <div key={i} className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '4px' }}>
-                  • {a.anomaly.flags.join(', ')}
-                </div>
-              ))}
+              <div className="flex flex-col gap-sm">
+                {anomalyReport.map((a, i) => (
+                  <div key={i} className="text-muted" style={{ fontSize: '0.85rem', paddingLeft: '24px', position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: 0, top: '4px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-warning)' }} />
+                    {a.anomaly.flags.join(', ')}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          <div className="flex gap-md">
-            <button
-              className="btn btn-primary btn-lg"
-              onClick={() => window.location.reload()}
-              style={{ flex: 1 }}
-            >
-              ➕ New Assessment
+          <div className="flex flex-col gap-md mt-xl">
+            <button className="btn btn-primary btn-lg hover-scale w-full flex justify-center gap-sm" onClick={() => window.location.reload()}>
+              ➕ Initialize New Session
             </button>
-            <button
-              className="btn btn-secondary btn-lg"
-              onClick={() => window.location.href = `/profile/${selectedAthlete?.id}`}
-              style={{ flex: 1 }}
-            >
-              👤 View Profile
+            <button className="btn btn-secondary btn-lg w-full" onClick={() => navigate(`/profile/${selectedAthlete?.id || DEMO_ATHLETES[0].id}`)}>
+              👤 Return to Athlete Profile
             </button>
           </div>
         </div>
@@ -248,243 +254,175 @@ export default function RecordAssessment() {
     );
   }
 
+  // ═══════════════════════════════════════════════
+  // MAIN WIZARD
+  // ═══════════════════════════════════════════════
   return (
-    <div className="animate-fade-in">
-      {/* Header */}
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-sm">
-          <Timer size={28} color="var(--accent-secondary)" />
-          Record Assessment
+    <div className="animate-fade-in pb-2xl">
+      {/* Dynamic Header */}
+      <div className="page-header sticky top-0 bg-background/90 backdrop-blur z-40 py-md mb-xl" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', margin: '-16px -16px 24px -16px', padding: '16px' }}>
+        <h1 className="page-title flex items-center gap-sm mb-xs" style={{ fontSize: '1.5rem' }}>
+          <Timer size={24} color="var(--accent-primary)" />
+          {step < 3 ? 'Assessment Setup' : 'Live Assessment Active'}
         </h1>
-        <p className="page-subtitle">SAI-standard 8-test battery + sport-specific metrics</p>
+        {renderStepIndicator()}
       </div>
 
-      {/* Step Indicator */}
-      {renderStepIndicator()}
+      <div className="max-w-xl mx-auto">
+        {/* Step Context Pills */}
+        {step > 0 && (
+          <div className="flex flex-wrap gap-sm mb-xl animate-fade-in">
+            {selectedAthlete && <span className="badge flex items-center gap-xs bg-white/5 border border-white/10"><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-success)' }}></span>{selectedAthlete.name}</span>}
+            {selectedSport && <span className="badge flex items-center gap-xs bg-white/5 border border-white/10">{SPORT_ICONS[selectedSport]} {selectedSport.replace('_', ' ')}</span>}
+            {testMode && <span className="badge flex items-center gap-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{testMode === 'sai' ? '🏅 SAI Battery' : `🎯 ${selectedSport.replace('_', ' ')} Mode`}</span>}
+          </div>
+        )}
 
-      {/* ═══ STEP 0: Select Athlete ═══ */}
-      {step === 0 && (
-        <div className="animate-fade-in">
-          <h3 className="heading-3 mb-md">👤 Select Athlete</h3>
-          <div className="grid grid-2">
-            {athletes.map(athlete => (
-              <button
-                key={athlete.id}
-                className="glass-card hover-lift"
-                onClick={() => { setSelectedAthlete(athlete); setStep(1); }}
-                style={{
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  border: selectedAthlete?.id === athlete.id
-                    ? '2px solid var(--accent-primary)'
-                    : '1px solid rgba(255,255,255,0.08)',
-                }}
-              >
-                <div className="flex items-center gap-md">
-                  <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: 'var(--radius-full)',
-                    background: 'var(--gradient-hero)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.2rem',
-                    fontWeight: 700,
-                    color: 'white',
-                  }}>
-                    {athlete.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="heading-4" style={{ fontSize: '0.95rem' }}>{athlete.name}</div>
-                    <div className="tamil text-muted" style={{ fontSize: '0.75rem' }}>{athlete.nameTamil}</div>
-                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                      {athlete.sport?.replace('_', ' ')} • {athlete.district}
+        {/* STEP 0: Select Athlete */}
+        {step === 0 && (
+          <div className="animate-slide-up">
+            <h3 className="heading-3 mb-lg text-gradient">Select Target Athlete</h3>
+            <div className="flex flex-col gap-md">
+              {athletes.map(athlete => (
+                <button
+                  key={athlete.id}
+                  className="glass-card hover-lift text-left w-full transition-all duration-300"
+                  onClick={() => { setSelectedAthlete(athlete); setStep(1); }}
+                  style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+                >
+                  <div className="flex items-center gap-lg p-sm">
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--gradient-hero)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: 800 }}>
+                      {athlete.name.charAt(0)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="heading-4 flex items-center justify-between mb-xs">
+                        {athlete.name}
+                        <ChevronRight size={18} color="var(--accent-secondary)" />
+                      </div>
+                      <div className="flex gap-md text-muted text-xs">
+                        <span>{athlete.sport?.replace('_', ' ')}</span>
+                        <span>•</span>
+                        <span>{athlete.district}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ═══ STEP 1: Select Sport ═══ */}
-      {step === 1 && (
-        <div className="animate-fade-in">
-          <div className="mb-md">
-            <span className="badge badge-verified">
-              👤 {selectedAthlete?.name}
-            </span>
-          </div>
-          <SportSelector
-            selected={selectedSport}
-            onSelect={(sport) => { setSelectedSport(sport); setStep(2); }}
-          />
-        </div>
-      )}
-
-      {/* ═══ STEP 2: Choose Test Mode ═══ */}
-      {step === 2 && (
-        <div className="animate-fade-in">
-          <div className="mb-md flex gap-sm flex-wrap">
-            <span className="badge badge-verified">👤 {selectedAthlete?.name}</span>
-            <span className="badge badge-pending">{SPORT_ICONS[selectedSport]} {selectedSport?.replace('_', ' ')}</span>
-          </div>
-          <h3 className="heading-3 mb-lg">Choose Assessment Type</h3>
-          <div className="grid grid-2">
-            <button
-              className="glass-card hover-lift"
-              onClick={() => { setTestMode('sai'); setStep(3); }}
-              style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-2xl) var(--space-lg)' }}
-            >
-              <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>🏅</div>
-              <h3 className="heading-3 mb-sm">SAI Battery</h3>
-              <p className="text-secondary" style={{ fontSize: '0.85rem' }}>
-                Standard 8-test fitness battery (30m, 60m, 600m, jumps, shuttle, flexibility, BMI)
-              </p>
-              <div className="badge badge-verified mt-md">8 Tests</div>
-            </button>
-            <button
-              className="glass-card hover-lift"
-              onClick={() => { setTestMode('sport_specific'); setStep(3); }}
-              style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-2xl) var(--space-lg)' }}
-            >
-              <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>
-                {SPORT_ICONS[selectedSport] || '🏅'}
-              </div>
-              <h3 className="heading-3 mb-sm">Sport-Specific</h3>
-              <p className="text-secondary" style={{ fontSize: '0.85rem' }}>
-                Metrics specific to {selectedSport?.replace('_', ' ')} — speed, skill, endurance
-              </p>
-              <div className="badge badge-pending mt-md">
-                {selectedSport?.replace('_', ' ')} Metrics
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ STEP 3: Run Assessment ═══ */}
-      {step === 3 && (
-        <div className="animate-fade-in">
-          <div className="mb-md flex gap-sm flex-wrap">
-            <span className="badge badge-verified">👤 {selectedAthlete?.name}</span>
-            <span className="badge badge-pending">{SPORT_ICONS[selectedSport]} {selectedSport?.replace('_', ' ')}</span>
-            <span className="badge" style={{ background: 'rgba(99,102,241,0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(99,102,241,0.3)' }}>
-              {testMode === 'sai' ? '🏅 SAI Battery' : '🎯 Sport-Specific'}
-            </span>
-          </div>
-
-          {testMode === 'sai' ? (
-            <SAITestEngine
-              athleteId={selectedAthlete?.id}
-              onComplete={handleAssessmentComplete}
-            />
-          ) : (
-            <MetricsRecorder
-              sport={selectedSport}
-              athleteId={selectedAthlete?.id}
-              onComplete={handleAssessmentComplete}
-            />
-          )}
-        </div>
-      )}
-
-      {/* ═══ STEP 4: Attestation ═══ */}
-      {step === 4 && (
-        <div className="animate-fade-in">
-          <div className="mb-md flex gap-sm flex-wrap">
-            <span className="badge badge-verified">✅ {assessmentResults.length} tests recorded</span>
-          </div>
-          <AttestationForm
-            assessmentId={assessmentResults[0]?.id}
-            onComplete={handleAttestationComplete}
-          />
-        </div>
-      )}
-
-      {/* ═══ STEP 5: Hash + Results ═══ */}
-      {step === 5 && (
-        <div className="animate-fade-in">
-          <div className="glass-card-static mb-lg" style={{ textAlign: 'center' }}>
-            <div style={{
-              fontSize: '3rem',
-              marginBottom: 'var(--space-md)',
-              animation: 'float 2s ease-in-out infinite',
-            }}>
-              🔐
-            </div>
-            <h3 className="heading-3 mb-sm">Integrity Hash Generated</h3>
-            <div style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.75rem',
-              color: 'var(--accent-secondary)',
-              background: 'var(--bg-tertiary)',
-              padding: 'var(--space-md)',
-              borderRadius: 'var(--radius-md)',
-              wordBreak: 'break-all',
-              marginBottom: 'var(--space-md)',
-            }}>
-              SHA-256: {hash || 'Generating...'}
-            </div>
-            <p className="text-muted" style={{ fontSize: '0.85rem' }}>
-              This hash ensures the assessment data cannot be tampered with.
-            </p>
-          </div>
-
-          {/* Results summary */}
-          <div className="glass-card-static mb-lg">
-            <h4 className="heading-4 mb-md">📊 Results Summary</h4>
-            <div className="flex flex-col gap-xs">
-              {assessmentResults.map((r, i) => (
-                <div key={r.id} className="flex justify-between items-center" style={{
-                  padding: 'var(--space-xs) var(--space-md)',
-                  background: 'var(--bg-glass)',
-                  borderRadius: 'var(--radius-sm)',
-                }}>
-                  <span className="text-secondary" style={{ fontSize: '0.85rem' }}>{r.testType}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--accent-success)' }}>
-                    {r.value} {r.unit}
-                  </span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
+        )}
 
-          <button className="btn btn-primary btn-lg" onClick={() => setStep(6)} style={{ width: '100%' }}>
-            📹 Add Video Evidence (Optional)
-          </button>
-          <button className="btn btn-ghost mt-sm" onClick={handleFinalize} style={{ width: '100%' }}>
-            Skip Video → Finalize
-          </button>
-        </div>
-      )}
+        {/* STEP 1: Select Sport */}
+        {step === 1 && (
+          <div className="animate-slide-up">
+            <h3 className="heading-3 mb-md">Select Sport Discipline</h3>
+            <p className="text-secondary mb-lg">Choose the sport category to calibrate assessment benchmarks and available specific tests.</p>
+            <SportSelector selected={selectedSport} onSelect={(sport) => { setSelectedSport(sport); setStep(2); }} />
+          </div>
+        )}
 
-      {/* ═══ STEP 6: Video Capture ═══ */}
-      {step === 6 && (
-        <div className="animate-fade-in">
-          <VideoClipCapture
-            onCapture={(base64) => {
-              setVideoClip(base64);
-              handleFinalize();
-            }}
-            onSkip={handleFinalize}
-          />
-        </div>
-      )}
+        {/* STEP 2: Choose Test Mode */}
+        {step === 2 && (
+          <div className="animate-slide-in-right">
+            <h3 className="heading-3 mb-xl text-center">Select Assessment Configuration</h3>
+            <div className="flex flex-col md:flex-row gap-lg">
 
-      {/* Back button */}
-      {step > 0 && step < 4 && !done && (
-        <div className="mt-lg text-center">
-          <button
-            className="btn btn-ghost"
-            onClick={() => setStep(s => Math.max(0, s - 1))}
-          >
-            ← Back
-          </button>
-        </div>
-      )}
+              <button
+                className="glass-card hover-lift flex-1 flex flex-col items-center justify-center p-xl relative overflow-hidden group"
+                onClick={() => { setTestMode('sai'); setStep(3); }}
+                style={{ minHeight: '280px', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div style={{ fontSize: '4rem', marginBottom: 'var(--space-md)', filter: 'drop-shadow(0 0 20px rgba(99,102,241,0.3))' }}>🏅</div>
+                <h3 className="heading-3 mb-sm">SAI Base Battery</h3>
+                <p className="text-secondary text-sm text-center mb-lg px-md">
+                  Standard 8-test fitness profile (30m Sprint, 600m Run, Standing Broad Jump, V-Jump, Shuttle Run, Sit & Reach, BMI)
+                </p>
+                <div className="badge bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold uppercase tracking-wider text-xs">Full Standard Audit</div>
+              </button>
+
+              <button
+                className="glass-card hover-lift flex-1 flex flex-col items-center justify-center p-xl relative overflow-hidden group"
+                onClick={() => { setTestMode('sport_specific'); setStep(3); }}
+                style={{ minHeight: '280px', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div style={{ fontSize: '4rem', marginBottom: 'var(--space-md)', filter: 'drop-shadow(0 0 20px rgba(16,185,129,0.3))' }}>
+                  {SPORT_ICONS[selectedSport] || '🎯'}
+                </div>
+                <h3 className="heading-3 mb-sm text-center">{selectedSport?.replace('_', ' ')} Metrics</h3>
+                <p className="text-secondary text-sm text-center mb-lg px-md">
+                  Specialized tactical and mechanical skill tests designed exclusively for {selectedSport?.replace('_', ' ')} athletes.
+                </p>
+                <div className="badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase tracking-wider text-xs">Advanced Drills</div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: Run Assessment Battery Widgets */}
+        {step === 3 && (
+          <div className="animate-scale-in">
+            {testMode === 'sai' ? (
+              <SAITestEngine athleteId={selectedAthlete?.id} athleteInfo={selectedAthlete} onComplete={handleAssessmentComplete} />
+            ) : (
+              <MetricsRecorder sport={selectedSport} athleteId={selectedAthlete?.id} onComplete={handleAssessmentComplete} />
+            )}
+          </div>
+        )}
+
+        {/* STEP 4: Network Attestation Form */}
+        {step === 4 && (
+          <div className="animate-fade-in relative z-10">
+            <AttestationForm assessmentId={assessmentResults[0]?.id} baseAssessment={assessmentResults[0]} onComplete={handleAttestationComplete} />
+          </div>
+        )}
+
+        {/* STEP 5: Integrity Hash Results Preview */}
+        {step === 5 && (
+          <div className="animate-slide-up relative z-10">
+            <div className="glass-card-static text-center p-xl relative overflow-hidden mb-xl" style={{ border: '1px solid rgba(99, 102, 241, 0.4)' }}>
+              <div className="absolute inset-0 bg-indigo-500/5 mix-blend-overlay" />
+              <div style={{ fontSize: '4rem', marginBottom: 'var(--space-md)', animation: 'pulse 2s infinite' }}>🔐</div>
+              <h2 className="heading-2 mb-sm text-indigo-400">Cryptographic Signature Linked</h2>
+
+              <div className="bg-black/50 p-xl rounded-lg font-mono text-sm break-all leading-loose tracking-wide text-white border border-white/10 my-lg relative shadow-inner">
+                {hash || 'Generating HMAC-SHA256 Protocol...'}
+                {hash && <div className="absolute -top-3 -right-3 bg-success rounded-full p-2 text-white shadow-lg"><CheckCircle size={14} /></div>}
+              </div>
+
+              <p className="text-muted text-sm px-xl">
+                This unalterable blockchain-ready signature fuses athlete ID, metrics, timestamps, and witness verifications preventing offline data tampering prior to sync dispatch.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-md">
+              <button className="btn btn-primary btn-lg hover-scale flex justify-center items-center gap-sm text-lg py-md shadow-[0_0_30px_rgba(99,102,241,0.3)]" onClick={() => setStep(6)}>
+                <VideoClipCapture size={24} /> Capture Video Evidence <span className="text-indigo-200 text-sm font-normal ml-sm">(Strongly Recommended)</span>
+              </button>
+              <button className="btn btn-ghost hover:bg-white/5 py-md" onClick={() => handleFinalize()}>
+                Bypass Evidence & Finalize Transaction →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 6: Anti-Aliasing Video Capture Component */}
+        {step === 6 && (
+          <div className="animate-slide-in-right relative z-10">
+            <VideoClipCapture onCapture={(base64) => { setVideoClip(base64); handleFinalize(base64); }} onSkip={() => handleFinalize(null)} />
+          </div>
+        )}
+
+        {/* Safety Navigation Back Controls */}
+        {step > 0 && step < 3 && !done && (
+          <div className="mt-2xl flex justify-center">
+            <button className="btn btn-ghost text-muted hover:text-white flex items-center gap-xs transition-colors" onClick={() => setStep(s => Math.max(0, s - 1))}>
+              <ChevronRight size={16} className="rotate-180" /> Modify Previous Step Setup
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

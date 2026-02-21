@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { getAllAthletes } from '../utils/demoLoader';
 import ScoutDashboard from '../components/scout/ScoutDashboard';
+import { getCloudAthletes } from '../services/firestoreService';
 
 export default function ScoutView() {
   const [athletes, setAthletes] = useState([]);
@@ -11,7 +12,23 @@ export default function ScoutView() {
   });
 
   useEffect(() => {
-    setAthletes(getAllAthletes());
+    async function loadData() {
+      const demoAthletes = getAllAthletes();
+      if (navigator.onLine) {
+        try {
+          const cloudAthletes = await getCloudAthletes();
+          // Filter out duplicates (demo athletes already have stable IDs)
+          const cloudOnly = cloudAthletes.filter(ca => !demoAthletes.find(da => da.id === ca.id));
+          setAthletes([...demoAthletes, ...cloudOnly]);
+        } catch (e) {
+          console.error('[ScoutView] Cloud load failed:', e);
+          setAthletes(demoAthletes);
+        }
+      } else {
+        setAthletes(demoAthletes);
+      }
+    }
+    loadData();
   }, []);
 
   return (

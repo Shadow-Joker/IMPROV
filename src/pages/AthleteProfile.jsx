@@ -12,6 +12,7 @@ import { User, ClipboardList, Brain, CreditCard, AlertTriangle, UserPlus, ArrowL
 import { DEMO_ATHLETES } from '../utils/dataShapes';
 import { t } from '../utils/translations';
 import { getSyncQueue, getAssessmentsByAthlete } from '../utils/offlineDB';
+import { getAthleteById, getAssessmentsByAthleteId } from '../services/firestoreService';
 import { scoreAthlete, loadBenchmarks } from '../utils/talentScoring';
 import ProfileCard from '../components/athlete/ProfileCard';
 import QRPassport from '../components/athlete/QRPassport';
@@ -89,6 +90,16 @@ function AthleteProfileContent() {
         if (demo) currentAthlete = demo;
       }
 
+      // Cloud Fallback
+      if (!currentAthlete && navigator.onLine) {
+        try {
+          const cloudAthlete = await getAthleteById(id);
+          if (cloudAthlete) currentAthlete = cloudAthlete;
+        } catch (e) {
+          console.error('[Profile] Cloud fetch failed:', e);
+        }
+      }
+
       if (currentAthlete) {
         try {
           const storedAssays = JSON.parse(localStorage.getItem('sentrak_assessments') || '[]');
@@ -107,13 +118,28 @@ function AthleteProfileContent() {
               }
             });
 
-            const idbAssays = await getAssessmentsByAthlete(id);
-            idbAssays.forEach(pa => {
-              if (!existingIds.has(pa.id)) {
-                allAssessments.push(pa);
-                existingIds.add(pa.id);
-              }
-            });
+            try {
+              const idbAssays = await getAssessmentsByAthlete(id);
+              idbAssays.forEach(pa => {
+                if (!existingIds.has(pa.id)) {
+                  allAssessments.push(pa);
+                  existingIds.add(pa.id);
+                }
+              });
+            } catch (e) { }
+
+            // Cloud Assessments Fallback
+            if (navigator.onLine) {
+              try {
+                const cloudAssays = await getAssessmentsByAthleteId(id);
+                cloudAssays.forEach(ca => {
+                  if (!existingIds.has(ca.id)) {
+                    allAssessments.push(ca);
+                    existingIds.add(ca.id);
+                  }
+                });
+              } catch (e) { }
+            }
           } catch (e) { }
 
           // Sort descending by timestamp

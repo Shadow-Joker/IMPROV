@@ -13,6 +13,8 @@ import MetricsRecorder from '../components/assessment/MetricsRecorder';
 import AttestationForm from '../components/assessment/AttestationForm';
 import VideoClipCapture from '../components/assessment/VideoClipCapture';
 import ErrorBoundary from '../components/common/ErrorBoundary';
+import { saveAssessmentToCloud } from '../services/firestoreService';
+import { useAuth } from '../contexts/AuthContext';
 
 const STEPS = [
   { label: 'Athlete', icon: '👤', id: 'athlete' },
@@ -27,6 +29,7 @@ const STEPS = [
 export default function RecordAssessment() {
   const { athleteId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
 
   // Assessment State
@@ -143,6 +146,14 @@ export default function RecordAssessment() {
       try {
         await saveAssessment(fullAssessment);
         await addToSyncQueue({ ...fullAssessment, type: 'assessment' });
+        
+        // 3) Cloud Direct Save if online
+        if (navigator.onLine) {
+          await saveAssessmentToCloud({
+            ...fullAssessment,
+            recordedBy: user?.uid || 'demo-user'
+          });
+        }
       } catch (err) {
         console.error('[RecordAssessment] OfflineDB persistence save error:', err);
       }

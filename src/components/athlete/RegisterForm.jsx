@@ -17,6 +17,8 @@ import { createAthlete, SPORTS, GENDERS, AGE_GROUPS, getRatingTier } from '../..
 import { t } from '../../utils/translations';
 import { useLanguage } from '../shared/LanguageToggle';
 import VoiceInput from '../shared/VoiceInput';
+import { saveAthleteToCloud } from '../../services/firestoreService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const TN_DISTRICTS = [
     { en: 'Ariyalur', ta: 'அரியலூர்' }, { en: 'Chengalpattu', ta: 'செங்கல்பட்டு' },
@@ -76,6 +78,7 @@ function getAgeGroup(age) {
 export default function RegisterForm() {
     const navigate = useNavigate();
     const { language } = useLanguage();
+    const { user } = useAuth();
     const [step, setStep] = useState(1);
     const [slideDir, setSlideDir] = useState('right');
     const [saving, setSaving] = useState(false);
@@ -254,7 +257,7 @@ export default function RegisterForm() {
         if (targetStep === 5) startCamera();
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         setSaving(true);
         const athlete = createAthlete({
             name: form.name.trim(),
@@ -265,19 +268,26 @@ export default function RegisterForm() {
             district: form.district,
             village: form.village.trim(),
             photoURL: form.photoURL,
+            registeredBy: user?.uid || 'demo-user',
         });
 
         try {
+            // Local fallback
             const athletes = JSON.parse(localStorage.getItem('sentrak_athletes') || '[]');
             athletes.push(athlete);
             localStorage.setItem('sentrak_athletes', JSON.stringify(athletes));
+            
+            // Cloud dual-write
+            await saveAthleteToCloud(athlete);
+
             setNewAthlete(athlete);
             setSubmitted(true);
             globalToast.success('Athlete registered successfully!');
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             // Auto-navigate after 3 seconds
             setTimeout(() => navigate(`/profile/${athlete.id}`), 3000);
-        } catch {
+        } catch (err) {
+            console.error('[Register] Save failed:', err);
             setLocalToast(t('saveError', language));
             setSaving(false);
         }

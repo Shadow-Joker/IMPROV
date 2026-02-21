@@ -268,7 +268,7 @@ export default function AttestationForm({ assessmentId, baseAssessment = { athle
                                     <div className="flex justify-center gap-xs my-sm">
                                         {/* Simulated 6 box inputs */}
                                         <input
-                                            type="text"
+                                            type="tel"
                                             value={w.otp}
                                             onChange={e => updateWitness(i, 'otp', e.target.value.replace(/\D/g, '').slice(0, 6))}
                                             inputMode="numeric"

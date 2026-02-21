@@ -11,6 +11,7 @@ import SAITestEngine from '../components/assessment/SAITestEngine';
 import MetricsRecorder from '../components/assessment/MetricsRecorder';
 import AttestationForm from '../components/assessment/AttestationForm';
 import VideoClipCapture from '../components/assessment/VideoClipCapture';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 const STEPS = [
   { label: 'Athlete', icon: '👤', id: 'athlete' },
@@ -37,6 +38,9 @@ export default function RecordAssessment() {
   const [anomalyReport, setAnomalyReport] = useState([]);
   const [videoClip, setVideoClip] = useState(null);
   const [done, setDone] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isOfflineSave, setIsOfflineSave] = useState(false);
+  const [anomalyAcknowledged, setAnomalyAcknowledged] = useState(false);
 
   // Load athletes from localStorage + fallback to demo DB
   const athletes = (() => {
@@ -98,6 +102,11 @@ export default function RecordAssessment() {
   // Finalize Workflow: Persist to DBs
   const handleFinalize = useCallback(async (videoPayload = null) => {
     const finalVideoObj = videoPayload ? videoPayload : videoClip;
+    setIsSaving(true);
+
+    if (!navigator.onLine) {
+      setIsOfflineSave(true);
+    }
 
     for (const result of assessmentResults) {
       const fullAssessment = {
@@ -111,9 +120,13 @@ export default function RecordAssessment() {
       };
 
       // 1) Fallback LocalStorage Saving
-      const stored = JSON.parse(localStorage.getItem('sentrak_assessments') || '[]');
-      stored.push(fullAssessment);
-      localStorage.setItem('sentrak_assessments', JSON.stringify(stored));
+      try {
+        const stored = JSON.parse(localStorage.getItem('sentrak_assessments') || '[]');
+        stored.push(fullAssessment);
+        localStorage.setItem('sentrak_assessments', JSON.stringify(stored));
+      } catch (e) {
+        console.error("LocalStorage save failed", e);
+      }
 
       // 2) IndexedDB Persistent Saving & Sync Queueing
       try {
@@ -124,9 +137,16 @@ export default function RecordAssessment() {
       }
     }
 
-    setDone(true);
     if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
-  }, [assessmentResults, attestations, hash, videoClip, anomalyReport]);
+
+    // Task 1: Automatically redirect to profile
+    if (!navigator.onLine) {
+      // Show the offline warning for 2.5s before redirecting
+      setTimeout(() => navigate(`/profile/${selectedAthlete?.id || DEMO_ATHLETES[0].id}`), 2500);
+    } else {
+      navigate(`/profile/${selectedAthlete?.id || DEMO_ATHLETES[0].id}`);
+    }
+  }, [assessmentResults, attestations, hash, videoClip, anomalyReport, navigate, selectedAthlete]);
 
   // UI Components
   const renderStepIndicator = () => (
@@ -283,31 +303,34 @@ export default function RecordAssessment() {
           <div className="animate-slide-up">
             <h3 className="heading-3 mb-lg text-gradient">Select Target Athlete</h3>
             <div className="flex flex-col gap-md">
-              {athletes.map(athlete => (
-                <button
-                  key={athlete.id}
-                  className="glass-card hover-lift text-left w-full transition-all duration-300"
-                  onClick={() => { setSelectedAthlete(athlete); setStep(1); }}
-                  style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-                >
-                  <div className="flex items-center gap-lg p-sm">
-                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--gradient-hero)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: 800 }}>
-                      {athlete.name.charAt(0)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="heading-4 flex items-center justify-between mb-xs">
-                        {athlete.name}
-                        <ChevronRight size={18} color="var(--accent-secondary)" />
+              {athletes && athletes.map(athlete => {
+                if (!athlete) return null;
+                return (
+                  <button
+                    key={athlete.id}
+                    className="glass-card hover-lift text-left w-full transition-all duration-300"
+                    onClick={() => { setSelectedAthlete(athlete); setStep(1); }}
+                    style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+                  >
+                    <div className="flex items-center gap-lg p-sm">
+                      <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--gradient-hero)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: 800 }}>
+                        {athlete.name ? athlete.name.charAt(0) : '?'}
                       </div>
-                      <div className="flex gap-md text-muted text-xs">
-                        <span>{athlete.sport?.replace('_', ' ')}</span>
-                        <span>•</span>
-                        <span>{athlete.district}</span>
+                      <div className="flex-1">
+                        <div className="heading-4 flex items-center justify-between mb-xs">
+                          {athlete.name || 'Unknown Athlete'}
+                          <ChevronRight size={18} color="var(--accent-secondary)" />
+                        </div>
+                        <div className="flex gap-md text-muted text-xs">
+                          <span>{athlete.sport?.replace('_', ' ')}</span>
+                          <span>•</span>
+                          <span>{athlete.district}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
@@ -363,11 +386,13 @@ export default function RecordAssessment() {
         {/* STEP 3: Run Assessment Battery Widgets */}
         {step === 3 && (
           <div className="animate-scale-in">
-            {testMode === 'sai' ? (
-              <SAITestEngine athleteId={selectedAthlete?.id} athleteInfo={selectedAthlete} onComplete={handleAssessmentComplete} />
-            ) : (
-              <MetricsRecorder sport={selectedSport} athleteId={selectedAthlete?.id} onComplete={handleAssessmentComplete} />
-            )}
+            <ErrorBoundary onReset={() => setStep(2)}>
+              {testMode === 'sai' ? (
+                <SAITestEngine athleteId={selectedAthlete?.id} athleteInfo={selectedAthlete} onComplete={handleAssessmentComplete} />
+              ) : (
+                <MetricsRecorder sport={selectedSport} athleteId={selectedAthlete?.id} onComplete={handleAssessmentComplete} />
+              )}
+            </ErrorBoundary>
           </div>
         )}
 
@@ -381,6 +406,14 @@ export default function RecordAssessment() {
         {/* STEP 5: Integrity Hash Results Preview */}
         {step === 5 && (
           <div className="animate-slide-up relative z-10">
+            {isOfflineSave && (
+              <div className="glass-card mb-md text-center p-md bg-warning/20 border-warning/40 animate-pulse">
+                <AlertTriangle size={24} className="mx-auto mb-xs text-warning" />
+                <p className="text-warning font-bold">Saving to Offline Queue</p>
+                <p className="text-sm">Network dropped. Verifications stored safely locally.</p>
+              </div>
+            )}
+
             <div className="glass-card-static text-center p-xl relative overflow-hidden mb-xl" style={{ border: '1px solid rgba(99, 102, 241, 0.4)' }}>
               <div className="absolute inset-0 bg-indigo-500/5 mix-blend-overlay" />
               <div style={{ fontSize: '4rem', marginBottom: 'var(--space-md)', animation: 'pulse 2s infinite' }}>🔐</div>
@@ -396,12 +429,45 @@ export default function RecordAssessment() {
               </p>
             </div>
 
+            {/* Task 3: Anomaly warnings pre-save validation */}
+            {anomalyReport.length > 0 && (
+              <div className="glass-card-static mb-lg animate-fade-in" style={{
+                background: 'rgba(245, 158, 11, 0.05)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+              }}>
+                <div className="flex items-center gap-sm mb-sm">
+                  <AlertTriangle size={18} color="var(--accent-warning)" />
+                  <span className="heading-4" style={{ color: 'var(--accent-warning)' }}>AI Review Flagged Anomalies</span>
+                </div>
+                <div className="flex flex-col gap-sm mb-md">
+                  {anomalyReport.map((a, i) => (
+                    <div key={i} className="text-white font-medium" style={{ fontSize: '0.85rem', paddingLeft: '24px', position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: 0, top: '6px', width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-warning)' }} />
+                      <span className="text-warning mr-sm">{a.testType?.replace(/_/g, ' ')}:</span>
+                      {a.anomaly.flags.join(', ')}
+                    </div>
+                  ))}
+                </div>
+
+                <label className="flex items-center gap-sm cursor-pointer p-sm bg-black/40 rounded-lg border border-warning/20 hover:border-warning/50 transition-colors">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox"
+                    style={{ width: '20px', height: '20px', accentColor: 'var(--accent-warning)' }}
+                    checked={anomalyAcknowledged}
+                    onChange={(e) => setAnomalyAcknowledged(e.target.checked)}
+                  />
+                  <span className="text-sm text-white font-bold tracking-wide">I verify this unusual reading is accurate and was witnessed correctly.</span>
+                </label>
+              </div>
+            )}
+
             <div className="flex flex-col gap-md">
-              <button className="btn btn-primary btn-lg hover-scale flex justify-center items-center gap-sm text-lg py-md shadow-[0_0_30px_rgba(99,102,241,0.3)]" onClick={() => setStep(6)}>
+              <button disabled={isSaving || (anomalyReport.length > 0 && !anomalyAcknowledged)} className="btn btn-primary btn-lg hover-scale flex justify-center items-center gap-sm text-lg py-md shadow-[0_0_30px_rgba(99,102,241,0.3)] disabled:opacity-50" onClick={() => setStep(6)}>
                 <VideoClipCapture size={24} /> Capture Video Evidence <span className="text-indigo-200 text-sm font-normal ml-sm">(Strongly Recommended)</span>
               </button>
-              <button className="btn btn-ghost hover:bg-white/5 py-md" onClick={() => handleFinalize()}>
-                Bypass Evidence & Finalize Transaction →
+              <button disabled={isSaving || (anomalyReport.length > 0 && !anomalyAcknowledged)} className="btn btn-ghost hover:bg-white/5 py-md disabled:opacity-50" onClick={() => handleFinalize()}>
+                {isSaving ? "Finalizing Transaction..." : "Bypass Evidence & Finalize Transaction →"}
               </button>
             </div>
           </div>

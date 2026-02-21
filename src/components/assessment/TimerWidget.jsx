@@ -187,7 +187,7 @@ export default function TimerWidget({ onStop, onLap, autoStart = false, countdow
                 className="timer-display"
                 style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 'clamp(3rem, 10vw, 5rem)',
+                    fontSize: 'clamp(2rem, 12vw, 4.5rem)',
                     fontWeight: 800,
                     color: status === 'running' ? 'var(--accent-danger)' : status === 'stopped' ? 'var(--accent-success)' : 'white',
                     textShadow: status === 'running' ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'none',

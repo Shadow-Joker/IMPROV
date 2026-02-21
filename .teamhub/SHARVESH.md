@@ -1,21 +1,20 @@
-# Sharvesh — PHASE 3: INTEGRATION + DEMO READINESS
+# Sharvesh — PHASE 4: FINAL DEMO POLISH
 
-## Status: ✅ Phase 1 DONE ✅ Phase 2 DONE → Phase 3: Integration & Demo
+## Status: ✅ Phase 1 ✅ Phase 2 ✅ Phase 3 → Phase 4: Demo-Ready Final Polish
 
-## Branch: `feat/assessment-v3`
+## Branch: `feat/assessment-v4`
 
 ---
 
-## FULL ANTIGRAVITY PROMPT — PHASE 3 (paste into NEW Antigravity session)
+## FULL ANTIGRAVITY PROMPT — PHASE 4 (paste into NEW Antigravity session)
 
 ```
 I'm Sharvesh on Team Flexinator building SENTRAK for NXTGEN'26 hackathon.
-PHASE 1 (build) and PHASE 2 (polish) are DONE and merged to main.
-Now PHASE 3: Wire everything together, fix integration bugs, demo-proof the entire assessment flow.
+Phases 1-3 are DONE and merged. This is the FINAL POLISH pass.
+Goal: Make every assessment screen absolutely beautiful and demo-proof.
 
 REPO: https://github.com/Shadow-Joker/IMPROV.git
-MY BRANCH: feat/assessment-v3 (new branch from latest main)
-I MUST NOT touch files outside my ownership list.
+MY BRANCH: feat/assessment-v4 (new branch from latest main)
 
 ═══════════════════════════════════════════════════════════════
                     AUTONOMOUS WORKFLOW RULES
@@ -24,87 +23,104 @@ I MUST NOT touch files outside my ownership list.
 RULE 1 — GIT SETUP
   git clone https://github.com/Shadow-Joker/IMPROV.git
   cd IMPROV && npm install
-  git checkout -b feat/assessment-v3
+  git checkout -b feat/assessment-v4
   npm run dev
 
-RULE 2 — GIT DISCIPLINE
-  After EACH task completed: git add -A && git commit -m "integration(assessment): <what>" && git push origin feat/assessment-v3
-  After every 3rd commit: git tag snapshot/assessment-v3-int-<N> && git push origin --tags
-  Every 2 hours: git pull origin main && merge
-
+RULE 2 — After EACH task: git add -A && git commit && git push origin feat/assessment-v4
 RULE 3 — CHANGELOG: append after every push.
 RULE 4 — CONTINUOUS. Do NOT stop until all tasks done.
 
 ═══════════════════════════════════════════════════════════════
-   PHASE 3: INTEGRATION TASKS
-   Focus: cross-component wiring, data flow, demo-proofing
+   PHASE 4: FINAL DEMO POLISH — MAKE JUDGES SAY "WOW"
 ═══════════════════════════════════════════════════════════════
 
 ────────────────────────────────────────────────────────
-TASK 1: END-TO-END ASSESS → PROFILE FLOW
+TASK 1: TIMER WIDGET — DEMO SHOWSTOPPER
 ────────────────────────────────────────────────────────
-WHY: The judge needs to see an assessment be completely fulfilled,
-saved, hashed, and immediately visible on the athlete's passport.
-
-TEST THIS EXACT FLOW (fix anything broken):
-  1. Go to /assess/:demo-1 (pick Demo Athlete 1)
-  2. Step 1: select Athletics constraint.
-  3. Step 2: Use SAI Battery.
-  4. Step 3: Run the timer / enter data for all 8 SAI tests.
-  5. Step 4: Attestation form - fill 3 fake names & phones, click verify OTP.
-  6. Step 5: Save Assessment.
-  7. VERIFY: The data is appended to localStorage 'sentrak_assessments'.
-  8. VERIFY: The app automatically redirects to /profile/demo-1.
-  9. VERIFY: On the profile page, under "Recent Assessments", the newly inserted record IS VISIBLE, complete with the green verified hash badge.
-
-FIX ANY BREAKAGE in this flow immediately.
-
-────────────────────────────────────────────────────────
-TASK 2: PERSISTENCE & OFFLINE QUEUE
-────────────────────────────────────────────────────────
-WHY: If the internet drops during the assessment, we cannot lose data.
+WHY: The timer is the most interactive component judges touch.
+It needs to feel like a professional sports stopwatch app.
 
 WHAT TO DO:
-1. Ensure saveAssessment() uses offlineDB correctly, wrapping it in try/catch.
-2. If `navigator.onLine` is false, add a visual indicator to RecordAssessment page: "Saving to Offline Queue".
-3. When returning to /profile/:id, ensure we load assessments from both actual local storage AND the pending offline queue so the user sees their work instantly.
+1. Add a 3-2-1 countdown animation before the timer starts:
+   - Large numbers (5rem) that scale in, hold 700ms, scale out.
+   - "GO!" in gradient text at the end.
+   - Each number plays a short beep using AudioContext (440Hz for 3,2,1 and 880Hz for GO).
+2. When running: add a subtle red ring glow that pulses around the timer display.
+3. On stop: brief green flash + haptic vibrate(100).
+4. Display format: MM:SS.cc (centiseconds). Use a monospace font (var(--font-mono)).
+5. Buttons must be at least 80px diameter for projector visibility.
 
 ────────────────────────────────────────────────────────
-TASK 3: FRAUD DETECTION FEEDBACK
+TASK 2: ATTESTATION — THE "WOW" MOMENT
 ────────────────────────────────────────────────────────
-WHY: The anomaly flagging works in code but needs to be visible in UI.
-
-WHAT TO DO:
-1. In the Summary Step (Step 6), run the checkAnomalies() function from fraudDetection.js on the compiled data.
-2. If anomaly detected: highlight the suspicious value in YELLOW or RED on the summary screen, with a warning icon.
-3. Require the Coach to click a checkbox: "I verify this unusual reading is accurate" before allowing them to save. This is a massive trust signal for the judges.
-
-────────────────────────────────────────────────────────
-TASK 4: LOCALSTORAGE EDGE CASES & ERROR BOUNDARIES
-────────────────────────────────────────────────────────
-WHY: Corrupt data shouldn't crash the app during demo.
+WHY: "3 witnesses + OTP + SHA-256 hash" is our unique selling point.
+The UI must make judges FEEL the trust being built.
 
 WHAT TO DO:
-1. Add an ErrorBoundary wrapper specifically around SAITestEngine and MetricsRecorder. If they throw, show a gentle "Could not load test format. Resetting." and clear state.
-2. In your loading logic for `DEMO_ATHLETES`, handle the case where standard athletes don't have the sport chosen. Guard all loops and map functions with `if (!array) return null`.
+1. 3 witness cards in a row (stacked on mobile).
+2. Each card: numbered circle (①②③), name field, phone field, "Send OTP" button.
+3. OTP input: 6 separate digit boxes (like banking apps), auto-focus next on input.
+4. On verify: satisfying checkmark animation + card border turns green.
+5. When all 3 verified: dramatic reveal —
+   - All 3 cards shimmer with green glow.
+   - "COMMUNITY VERIFIED ✓" banner slides in from bottom.
+   - SHA-256 hash fingerprint appears below: "a3f2...9bc1"
+   - Brief confetti burst (CSS-only: 20 small colored squares falling).
+6. For demo: accept any 6-digit OTP as valid.
 
 ────────────────────────────────────────────────────────
-TASK 5: RESPONSIVE MOBILE POLISH
+TASK 3: RECORD ASSESSMENT PAGE — SMOOTH WIZARD
 ────────────────────────────────────────────────────────
-WHY: RecordAssessment is used by coaches on the field on mobile phones.
+WHY: The multi-step wizard is the backbone of the assessment flow.
+It must feel seamless, not clunky.
 
 WHAT TO DO:
-1. TimerWidget MUST NOT overflow horizontally on an iPhone SE (320px). Resize buttons if necessary.
-2. Attestation input boxes need to use input type="tel" to trigger the number pad on mobile.
-3. Make sure step navigation buttons ("Next", "Back") are pinned to the bottom of the screen on mobile, easy to hit with thumbs.
+1. Step progress bar at top: numbered circles connected by lines.
+   Current step: accent-primary + glow. Completed: green checkmark.
+2. Slide transitions between steps (translateX animation, 300ms).
+3. "Back" button always visible. "Next" disabled until step is valid.
+4. On final save: success screen with:
+   - Green checkmark animation (scale from 0 to 1 with bounce).
+   - "Assessment Recorded!" text.
+   - Link to athlete's profile.
+   - Summary of what was recorded.
+5. All data persists to localStorage immediately (no data loss on refresh).
+
+────────────────────────────────────────────────────────
+TASK 4: CHALLENGES PAGE — ENGAGEMENT ENGINE
+────────────────────────────────────────────────────────
+WHY: "District challenges" prove organic data collection strategy.
+
+WHAT TO DO:
+1. At least 5 seeded challenge cards with real data:
+   - "Fastest U-16 60m Sprint — Dharmapuri" (12 entries, closes in 5 days)
+   - "Longest U-14 Broad Jump — Salem" (8 entries, closes in 12 days)
+   - "Best U-18 Bowling Speed — Madurai" (15 entries, closes in 3 days)
+   - "Most Push-ups U-16 60s — Coimbatore" (20 entries, closes in 7 days)
+   - "Fastest U-14 Shuttle Run — Thanjavur" (6 entries, closes in 10 days)
+2. Each card: sport emoji, title, entry count, countdown badge, top 3 mini-leaderboard.
+3. "Enter Challenge" → navigates to /assess with sport pre-selected.
+4. Filter bar: Sport dropdown, Age Group dropdown.
+
+────────────────────────────────────────────────────────
+TASK 5: CROSS-BROWSER + MOBILE FINAL CHECK
+────────────────────────────────────────────────────────
+WHY: Judges may test on any device.
+
+WHAT TO DO:
+1. Test all assessment pages at 360px width (iPhone SE). Fix any overflow.
+2. Timer buttons: full-width on mobile, stacked vertically.
+3. OTP inputs: use inputmode="numeric" for mobile number pad.
+4. All touch targets: minimum 48px.
+5. Attestation phone input: use type="tel".
 
 ═══════════════════════════════════════════════════════════════
                     EXECUTION ORDER
 ═══════════════════════════════════════════════════════════════
 
-NOW: Clone → install → branch feat/assessment-v3 → npm run dev
-THEN: Tasks 1-5 in order. Commit + push + CHANGELOG after each.
-Create a final tag snapshot/assessment-v3-final when done.
+NOW: Clone → install → branch feat/assessment-v4 → npm run dev
+THEN: Tasks 1-5 in order. Commit + push after each.
+Tag snapshot/assessment-v4-final when ALL done.
 
 DO NOT STOP. DO NOT ASK. Build, test, push, continue.
 ```

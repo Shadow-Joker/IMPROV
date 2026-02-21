@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import { User, ClipboardList, Brain, CreditCard, AlertTriangle, UserPlus } from 'lucide-react';
 import { DEMO_ATHLETES } from '../utils/dataShapes';
 import { t } from '../utils/translations';
+import { getSyncQueue, getAssessmentsByAthlete } from '../utils/offlineDB';
 import ProfileCard from '../components/athlete/ProfileCard';
 import QRPassport from '../components/athlete/QRPassport';
 import MentalProfileForm from '../components/athlete/MentalProfileForm';
@@ -73,15 +74,57 @@ function AthleteProfileContent() {
   useEffect(() => {
     setLoading(true);
     // Simulate brief loading for polish
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
+      let currentAthlete = null;
       try {
         const stored = JSON.parse(localStorage.getItem('sentrak_athletes') || '[]');
         const found = stored.find((a) => a.id === id);
-        if (found) { setAthlete(found); setLoading(false); return; }
+        if (found) { currentAthlete = found; }
       } catch { /* noop */ }
 
-      const demo = DEMO_ATHLETES.find((a) => a.id === id);
-      if (demo) setAthlete(demo);
+      if (!currentAthlete) {
+        const demo = DEMO_ATHLETES.find((a) => a.id === id);
+        if (demo) currentAthlete = demo;
+      }
+
+      if (currentAthlete) {
+        try {
+          const storedAssays = JSON.parse(localStorage.getItem('sentrak_assessments') || '[]');
+          const localAssays = storedAssays.filter(a => a.athleteId === id);
+
+          let allAssessments = [...localAssays];
+          try {
+            const queue = await getSyncQueue();
+            const pending = queue.filter(q => q.type === 'assessment' && q.athleteId === id);
+            const existingIds = new Set(allAssessments.map(a => a.id));
+
+            pending.forEach(pa => {
+              if (!existingIds.has(pa.id)) {
+                allAssessments.push(pa);
+                existingIds.add(pa.id);
+              }
+            });
+
+            const idbAssays = await getAssessmentsByAthlete(id);
+            idbAssays.forEach(pa => {
+              if (!existingIds.has(pa.id)) {
+                allAssessments.push(pa);
+                existingIds.add(pa.id);
+              }
+            });
+          } catch (e) { }
+
+          // Sort descending by timestamp
+          allAssessments.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+          if (allAssessments.length > 0) {
+            currentAthlete = { ...currentAthlete, assessments: allAssessments };
+          }
+        } catch (e) { }
+
+        setAthlete(currentAthlete);
+      }
+
       setLoading(false);
     }, 400);
     return () => clearTimeout(timer);

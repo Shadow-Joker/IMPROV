@@ -33,6 +33,11 @@ Types: FEAT | FIX | MERGE | BRANCH | SYNC | DESIGN | DATA
 [17:10 IST] SHARVESH feat/assessment FEAT — RecordAssessment.jsx: full 7-step assessment page integrating all components
 [17:10 IST] SHARVESH feat/assessment FEAT — ChallengeCard.jsx + Challenges.jsx: 5 seeded district challenges with filters
 [17:15 IST] SHARVESH feat/assessment BRANCH — Tagged snapshot/assessment-v1 (all 14 files built and verified)
+[19:35 IST] SHARVESH feat/assessment-v3 FIX — RecordAssessment.jsx: End-to-end cross-DB persistence and auto-redirect handling to Profile
+[19:40 IST] SHARVESH feat/assessment-v3 FIX — AthleteProfile.jsx: Merged IDB offline queue fallback data alongside LocalStorage on init
+[19:45 IST] SHARVESH feat/assessment-v3 FEAT — RecordAssessment.jsx: Integrated AI Anomaly Fraud warnings with a forced coach verification opt-in
+[19:50 IST] SHARVESH feat/assessment-v3 FEAT — ErrorBoundary.jsx: React error boundaries safeguarding TestEngine/MetricsRecorder maps
+[19:55 IST] SHARVESH feat/assessment-v3 DESIGN — TimerWidget.jsx & AttestationForm.jsx & RecordAssessment.jsx: Clamped viewport fonts, pinned nav, enforced tel inputs for iPhone UX
 ```
 
 ### Scout Phase (Uday)

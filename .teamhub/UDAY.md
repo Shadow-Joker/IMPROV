@@ -1,23 +1,20 @@
-# Uday — PHASE 2: POLISH & PRECISION
+# Uday — PHASE 3: FINAL INTEGRATION + SECURITY HARDENING
 
-## Status: ✅ Phase 1 DONE → Phase 2: Full Polish + WOW Factor
+## Status: ✅ P1 ✅ P2 → Phase 3: Wire Scout to Live Data + Security Fixes
 
-## Branch: `feat/scout-v2`
-
-> ⚠️ **UDAY — Phase 2 prompt is ready. Start a NEW Antigravity session and paste the prompt below!**
+## Branch: `feat/scout-v3`
 
 ---
 
-## FULL ANTIGRAVITY PROMPT — PHASE 2 (paste into NEW Antigravity session)
+## FULL ANTIGRAVITY PROMPT — PHASE 3 (paste into NEW Antigravity session)
 
 ```
 I'm Uday on Team Flexinator building SENTRAK for NXTGEN'26 hackathon.
-MY PHASE 1 IS DONE — all 14 scout files are built and merged to main.
-Now PHASE 2: precision polish, bug fixes, and making the Scout Dashboard jaw-dropping.
+PHASE 1 (build) and PHASE 2 (polish) are DONE and merged.
+PHASE 3: Wire the Scout Dashboard to REAL localStorage data + add security hardening.
 
 REPO: https://github.com/Shadow-Joker/IMPROV.git
-MY BRANCH: feat/scout-v2 (new branch from latest main)
-I MUST NOT touch files outside my ownership list.
+MY BRANCH: feat/scout-v3 (new branch from latest main)
 
 ═══════════════════════════════════════════════════════════════
                     AUTONOMOUS WORKFLOW RULES
@@ -26,121 +23,115 @@ I MUST NOT touch files outside my ownership list.
 RULE 1 — GIT SETUP
   git clone https://github.com/Shadow-Joker/IMPROV.git
   cd IMPROV && npm install
-  git checkout -b feat/scout-v2
+  git checkout -b feat/scout-v3
   npm run dev
 
-RULE 2 — GIT DISCIPLINE
-  After EACH file improved: git add -A && git commit -m "polish(scout): <what>" && git push origin feat/scout-v2
-  After every 3rd commit: git tag snapshot/scout-v2-p<N> && git push origin --tags
-  Every 2 hours: git pull origin main && merge
-
+RULE 2 — After EACH task: git add -A && git commit && git push origin feat/scout-v3
 RULE 3 — CHANGELOG: append after every push.
 RULE 4 — CONTINUOUS. Do NOT stop until all tasks done.
 
 ═══════════════════════════════════════════════════════════════
-   PHASE 2: DETAILED IMPROVEMENTS
+   PHASE 3: LIVE DATA WIRING + SECURITY
 ═══════════════════════════════════════════════════════════════
 
 ────────────────────────────────────────────────────────
-TASK 1: src/components/scout/TalentHeatMap.jsx — VISUAL IMPACT
+TASK 1: WIRE SCOUT TO LIVE DATA
 ────────────────────────────────────────────────────────
-WHY: The heat map is our "data analytics" differentiator. Must look dynamic.
+WHY: The Scout Dashboard currently uses static data. It must read
+from localStorage where demo athletes + real assessments live.
 
 WHAT TO DO:
-1. Make the TN map interactive: each district is a clickable region.
-2. Color intensity: gradient from soft blue (low talent) to deep accent (high).
-3. Hover: scale(1.05) + glassmorphic tooltip: District Name, Athletes, Top Sport.
-4. Animation: stagger fade-in of districts.
-5. Load data from localStorage (seeded demo athletes) to make counts real.
+1. In ScoutDashboard.jsx: import { getAllAthletes, getAllAssessments } from
+   '../../utils/demoLoader'.
+2. On mount (useEffect), call getAllAthletes() and getAllAssessments().
+   Set them as state.
+3. Pass the real athlete array to DiscoveryFeed, TalentHeatMap,
+   AthleteRanking, and SearchFilters.
+4. The KPI cards (Total Athletes, This Week's Assessments, Verified Talent)
+   should compute from the loaded data, NOT hardcoded numbers.
+5. When a scout clicks "View Passport" on an athlete card,
+   navigate to /profile/:id using the real athlete ID.
 
 ────────────────────────────────────────────────────────
-TASK 2: src/components/scout/ScoutDashboard.jsx — PREMIUM LAUNCHPAD
+TASK 2: HEAT MAP → REAL DISTRICT DISTRIBUTION
 ────────────────────────────────────────────────────────
-WHY: First thing a recruiter sees. Must scream "enterprise analytics".
-
-WHAT TO DO:
-1. Top: 3 KPI cards (Total Athletes, Assessments This Week, Verified Talent).
-   Each with animated counter and a mini sparkline chart in background.
-2. Layout: CSS Grid — heatmap 60% width, discovery feed 40% on desktop.
-3. "Live Activity" ticker at bottom showing recent attestations.
-4. "Generate Report" button (simulated PDF download).
-
-────────────────────────────────────────────────────────
-TASK 3: src/components/scout/DiscoveryFeed.jsx — SOCIAL FEED UX
-────────────────────────────────────────────────────────
-WHY: Browsing talent should feel addictive like a modern social feed.
+WHY: The heat map must show WHERE athletes are concentrated based
+on actual data, not static numbers.
 
 WHAT TO DO:
-1. Each athlete card: circular avatar, sport badge, composite score + tier.
-2. "New Assessment" badge with pulsing green dot on recently assessed athletes.
-3. "Load More" button for infinite scroll simulation (5 at a time).
-4. Quick actions on hover/tap: "View Passport", "Shortlist", "Send Offer".
-5. Wire data from localStorage (demo athletes + assessments).
+1. Count athletes per district from the loaded athlete array.
+   athlete.district field maps to TN districts.
+2. Color intensity should be proportional to athlete count.
+3. Clicking a district should filter the DiscoveryFeed to only
+   show athletes from that district.
+4. Show a "Clear Filter" button when a district is selected.
 
 ────────────────────────────────────────────────────────
-TASK 4: src/components/scout/SearchFilters.jsx — POWER TOOLS
+TASK 3: SEARCH FILTERS → REAL-TIME FILTERING
 ────────────────────────────────────────────────────────
-WHY: Scouts need complex queries. Must be smooth.
-
-WHAT TO DO:
-1. Multi-select pills for sports: clickable pill buttons [Kabaddi][Athletics][+].
-2. Age range: double-thumb slider (12 to 22 range).
-3. "Verified Only" toggle (iOS-style switch, green accent).
-4. Minimum rating threshold slider.
-5. Apply filters to DiscoveryFeed in real-time (filter demo data).
-
-────────────────────────────────────────────────────────
-TASK 5: src/components/scout/AthleteRanking.jsx — LEADERBOARD
-────────────────────────────────────────────────────────
-WHY: Leaderboards drive competition and make data meaningful.
+WHY: Filters must actually filter the real athlete data.
 
 WHAT TO DO:
-1. Table: Rank, Athlete, District, Score, Trend (green/red arrow).
-2. Top 3: gold/silver/bronze background tints.
-3. "Statewide" / "Your District" toggle.
-4. Populate from demo data, sorted by talent rating descending.
+1. Sport pills: extract unique sports from athlete data.
+2. Age range slider: filter by athlete.age.
+3. "Verified Only" toggle: filter to athletes where
+   assessments[].attestations.length >= 3.
+4. Rating threshold: filter by athlete.talentRating.
+5. All filters should update DiscoveryFeed in real-time.
 
 ────────────────────────────────────────────────────────
-TASK 6: src/components/scout/RecruitmentPortal.jsx + OfferCard.jsx
+TASK 4: ANTI-FRAUD VISIBILITY IN SCOUT VIEW
 ────────────────────────────────────────────────────────
-WHY: Closes the loop — scouts can actually act on talent they find.
-
-WHAT TO DO:
-1. "Saved Athletes" list from localStorage.
-2. "Make Offer" opens OfferCard modal: type (Scholarship/Academy/Sponsorship),
-   value, message to athlete.
-3. "Send Offer" → confetti + toast + status "Offer Pending".
-4. Track in localStorage ('sentrak_mock_offers').
-
-────────────────────────────────────────────────────────
-TASK 7: src/components/demo/RevenueCalculator.jsx + ScaleMetrics.jsx
-────────────────────────────────────────────────────────
-WHY: Business model proof for judges.
+WHY: Scouts need to see whether an athlete's data is trustworthy.
+This is a huge trust differentiator for judges.
 
 WHAT TO DO:
-1. Interactive sliders: Districts Onboarded, Assessments/Month, Scout Subscriptions.
-2. Auto-calculate projected ARR with large gradient numbers.
-3. ScaleMetrics: visual funnel "Villages → Schools → Athletes → Prodigies".
-4. Animated progression filling bars.
+1. On each athlete card in DiscoveryFeed, show a "Trust Badge":
+   - 🟢 "Verified" (3+ attestations, all OTP verified, no anomalies)
+   - 🟡 "Partial" (1-2 attestations or some unverified)
+   - 🔴 "Unverified" (0 attestations)
+2. In athlete detail/passport view, show:
+   - Hash fingerprint (first 8 + last 4 chars of SHA-256)
+   - Number of witnesses
+   - Anomaly flags if any exist
+3. Add a "Fraud Alert" section that shows athletes with
+   flagged assessments (if any anomalies were detected by
+   the fraud detection engine).
 
 ────────────────────────────────────────────────────────
-TASK 8: RESPONSIVE + MOBILE
+TASK 5: OFFER TRACKING + TOAST NOTIFICATIONS
+────────────────────────────────────────────────────────
+WHY: Every action needs feedback to feel premium.
+
+WHAT TO DO:
+1. Import { toast } from '../components/shared/Toast'.
+2. When "Shortlist" is clicked: toast.success("Added to shortlist!").
+3. When "Send Offer" is submitted: toast.success("Offer sent to athlete!").
+4. When "Generate Report" is clicked: simulate a 2s delay,
+   then toast.info("Report downloaded!").
+5. Save shortlisted athletes to localStorage ('sentrak_shortlist').
+6. Show shortlist count badge on the "Recruitment" tab.
+
+────────────────────────────────────────────────────────
+TASK 6: RESPONSIVE FINAL PASS
 ────────────────────────────────────────────────────────
 WHY: Judges test on phones.
 
 WHAT TO DO:
-1. Stack layout vertically on <768px.
-2. Card-based lists on mobile instead of complex tables.
-3. All touch targets: minimum 44x44px.
-4. Test at 360px width, fix all overflow issues.
+1. Test at 360px width. All cards must fit without horizontal scroll.
+2. Heatmap: on mobile, show a simplified list view of districts
+   instead of the SVG map.
+3. Ranking table: on mobile (<768px), show card-based layout
+   instead of table rows.
+4. Touch targets: all buttons and pills minimum 48px.
 
 ═══════════════════════════════════════════════════════════════
                     EXECUTION ORDER
 ═══════════════════════════════════════════════════════════════
 
-NOW: Clone → install → branch feat/scout-v2 → npm run dev
-THEN: Tasks 1-8 in order. Commit + push + CHANGELOG after each.
-Tags after tasks 3, 6, 8.
+NOW: Clone → install → branch feat/scout-v3 → npm run dev
+THEN: Tasks 1-6 in order. Commit + push after each.
+Tag snapshot/scout-v3-final when ALL done.
 
 DO NOT STOP. DO NOT ASK. Build, test, push, continue.
 ```

@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
 import OfflineIndicator from './components/layout/OfflineIndicator';
@@ -73,6 +74,7 @@ export default function App() {
           </Routes>
         </main>
         <BottomNav />
+        <SpeedInsights />
       </div>
     </ToastProvider>
   );

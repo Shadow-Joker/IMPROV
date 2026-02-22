@@ -19,7 +19,11 @@ export default function AthleteRanking({ athletes = [], filters = {} }) {
         const f = filters;
         const activeSports = f.sports?.length ? f.sports : (f.sport ? [f.sport] : []);
         if (activeSports.length) list = list.filter(a => activeSports.includes(a.sport));
-        if (f.ageGroup) list = list.filter(a => getAgeGroup(a.age) === f.ageGroup);
+        if (f.ageGroup) {
+            const ageMap = { 'U-12': [0, 12], 'U-14': [12, 14], 'U-16': [14, 16], 'U-18': [16, 18], 'U-21': [18, 21] };
+            const range = ageMap[f.ageGroup];
+            if (range) list = list.filter(a => a.age >= range[0] && a.age < range[1]);
+        }
         if (f.gender) list = list.filter(a => a.gender === f.gender);
         if (f.district) list = list.filter(a => a.district?.toLowerCase() === f.district?.toLowerCase());
         if (f.minRating > 1000) list = list.filter(a => (a.talentRating || 0) >= f.minRating);
@@ -66,29 +70,31 @@ export default function AthleteRanking({ athletes = [], filters = {} }) {
 
     return (
         <div className="animate-fade-in">
-            <div className="flex items-center justify-between mb-md">
+            <div className="flex items-center justify-between mb-md" style={{ flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
                 <h3 className="heading-4 flex items-center gap-sm">
                     <Trophy size={20} color="var(--accent-warning)" />
                     Talent Rankings
                 </h3>
                 <div className="flex items-center gap-sm">
                     {/* View Mode Toggle */}
-                    <div className="flex" style={{ borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div className="flex flex-wrap" style={{ borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
                         <button onClick={() => setViewMode('statewide')} style={{
                             padding: '5px 12px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', border: 'none',
                             background: viewMode === 'statewide' ? 'var(--accent-primary)' : 'transparent',
                             color: viewMode === 'statewide' ? 'white' : 'var(--text-secondary)', transition: 'all 0.2s',
+                            minHeight: 48, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}>Statewide</button>
                         <button onClick={() => setViewMode('district')} style={{
                             padding: '5px 12px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', border: 'none',
                             background: viewMode === 'district' ? 'var(--accent-primary)' : 'transparent',
                             color: viewMode === 'district' ? 'white' : 'var(--text-secondary)', transition: 'all 0.2s',
+                            minHeight: 48, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}>
-                            <MapPin size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} />
+                            <MapPin size={11} style={{ marginRight: 4 }} />
                             District
                         </button>
                     </div>
-                    <span className="badge badge-verified" style={{ fontSize: '0.68rem' }}>
+                    <span className="badge badge-verified" style={{ fontSize: '0.68rem', minHeight: 28, display: 'flex', alignItems: 'center' }}>
                         {filtered.length} ATHLETES
                     </span>
                 </div>
@@ -100,18 +106,18 @@ export default function AthleteRanking({ athletes = [], filters = {} }) {
                     <thead>
                         <tr>
                             <th style={{ width: 50 }}>#</th>
-                            <th onClick={() => toggleSort('name')} style={{ cursor: 'pointer' }}>
+                            <th onClick={() => toggleSort('name')} style={{ cursor: 'pointer', minHeight: 48 }}>
                                 <span className="flex items-center gap-xs">NAME <SortIcon col="name" /></span>
                             </th>
-                            <th onClick={() => toggleSort('age')} style={{ cursor: 'pointer', width: 60 }}>
+                            <th onClick={() => toggleSort('age')} style={{ cursor: 'pointer', width: 60, minHeight: 48 }}>
                                 <span className="flex items-center gap-xs">AGE <SortIcon col="age" /></span>
                             </th>
                             <th>SPORT</th>
                             <th>DISTRICT</th>
-                            <th onClick={() => toggleSort('rating')} style={{ cursor: 'pointer' }}>
+                            <th onClick={() => toggleSort('rating')} style={{ cursor: 'pointer', minHeight: 48 }}>
                                 <span className="flex items-center gap-xs">RATING <SortIcon col="rating" /></span>
                             </th>
-                            <th onClick={() => toggleSort('mental')} style={{ cursor: 'pointer', width: 80 }}>
+                            <th onClick={() => toggleSort('mental')} style={{ cursor: 'pointer', width: 80, minHeight: 48 }}>
                                 <span className="flex items-center gap-xs">MENTAL <SortIcon col="mental" /></span>
                             </th>
                             <th style={{ width: 60 }}>TREND</th>
@@ -136,7 +142,7 @@ export default function AthleteRanking({ athletes = [], filters = {} }) {
                                         }}>{rank}</span>
                                     </td>
                                     <td>
-                                        <div className="flex items-center gap-sm">
+                                        <div className="flex items-center gap-sm" style={{ minHeight: 48 }}>
                                             <div style={{
                                                 width: 32, height: 32, borderRadius: 'var(--radius-full)', background: 'var(--gradient-hero)',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -158,7 +164,7 @@ export default function AthleteRanking({ athletes = [], filters = {} }) {
                                     <td style={{ fontSize: '0.82rem' }}>{a.sport?.replace(/_/g, ' ')}</td>
                                     <td style={{ fontSize: '0.82rem' }}>{a.district}</td>
                                     <td>
-                                        <span className={`badge ${tier.class}`} style={{ fontSize: '0.68rem' }}>
+                                        <span className={`badge ${tier.class}`} style={{ fontSize: '0.68rem', padding: '4px 8px' }}>
                                             {a.talentRating || 1000}
                                         </span>
                                         <span className="text-muted" style={{ fontSize: '0.62rem', marginLeft: 4 }}>{tier.name}</span>
@@ -192,7 +198,7 @@ export default function AthleteRanking({ athletes = [], filters = {} }) {
                     const tier = getRatingTier(a.talentRating || 1000);
                     const trend = getTrend(a.name);
                     return (
-                        <div key={a.id} className="glass-card mb-sm" style={{ padding: '12px' }}
+                        <div key={a.id} className="glass-card mb-sm" style={{ padding: '12px', minHeight: 64 }}
                             onClick={() => navigate(`/profile/${a.id}`)}>
                             <div className="flex items-center gap-sm">
                                 <span style={{

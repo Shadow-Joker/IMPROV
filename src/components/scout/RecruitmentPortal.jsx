@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Send, Briefcase, X, Clock, CheckCircle, XCircle, Banknote, MapPin, MessageSquare, Star, PartyPopper } from 'lucide-react';
 import { createOffer } from '../../utils/dataShapes';
 import { getAllAthletes } from '../../utils/demoLoader';
+import { toast } from '../shared/Toast';
 
 const PROGRAM_TYPES = [
     { value: 'scholarship', label: 'Scholarship', icon: '🎓', color: 'var(--accent-success)' },
@@ -53,7 +54,6 @@ export default function RecruitmentPortal({ athletes: propAthletes }) {
     const [selectedAthlete, setSelectedAthlete] = useState('');
     const [offers, setOffers] = useState([]);
     const [showConfetti, setShowConfetti] = useState(false);
-    const [toast, setToast] = useState(null);
     const [form, setForm] = useState({
         academyName: '', type: 'scholarship', value: '', duration: '', location: '', message: '',
     });
@@ -64,6 +64,16 @@ export default function RecruitmentPortal({ athletes: propAthletes }) {
     const [saved, setSaved] = useState(() => {
         try { return JSON.parse(localStorage.getItem('sentrak_shortlist') || '[]'); } catch { return []; }
     });
+
+    // Auto-update saved list periodically or listen to storage events
+    useEffect(() => {
+        const updateSaved = () => {
+            try { setSaved(JSON.parse(localStorage.getItem('sentrak_shortlist') || '[]')); } catch { }
+        };
+        const interval = setInterval(updateSaved, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
     const savedAthletes = allAthletes.filter(a => saved.includes(a.id) || saved.includes(`r-${a.id}`) || saved.includes(`s-${a.id}`));
 
     useEffect(() => {
@@ -80,8 +90,8 @@ export default function RecruitmentPortal({ athletes: propAthletes }) {
         setForm({ academyName: '', type: 'scholarship', value: '', duration: '', location: '', message: '' });
         setSelectedAthlete('');
         setShowConfetti(true);
-        setToast('🎉 Offer sent successfully!');
-        setTimeout(() => { setShowConfetti(false); setToast(null); }, 3000);
+        toast.success('Offer sent successfully!');
+        setTimeout(() => setShowConfetti(false), 3000);
     };
 
     const updateStatus = (id, status) => {
@@ -105,7 +115,7 @@ export default function RecruitmentPortal({ athletes: propAthletes }) {
                     <Briefcase size={20} color="var(--accent-warning)" /> Recruitment Portal
                 </h3>
                 <button className="btn btn-primary" onClick={() => setShowModal(true)}
-                    style={{ padding: '8px 16px', minHeight: 40, fontSize: '0.85rem' }}>
+                    style={{ padding: '8px 16px', minHeight: 48, fontSize: '0.85rem' }}>
                     <Send size={16} /> Send Offer
                 </button>
             </div>
@@ -117,11 +127,12 @@ export default function RecruitmentPortal({ athletes: propAthletes }) {
                         <Star size={15} color="var(--accent-warning)" /> Saved Athletes ({savedAthletes.length})
                     </h4>
                     <div className="flex" style={{ gap: 8, flexWrap: 'wrap' }}>
-                        {savedAthletes.slice(0, 8).map(a => (
+                        {savedAthletes.map(a => (
                             <div key={a.id} style={{
                                 padding: '6px 12px', borderRadius: 'var(--radius-full)',
                                 background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)',
                                 fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+                                minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }} onClick={() => { setSelectedAthlete(a.id); setShowModal(true); }}>
                                 {a.name}
                             </div>
@@ -164,12 +175,12 @@ export default function RecruitmentPortal({ athletes: propAthletes }) {
                                 {offer.status === 'pending' && (
                                     <div className="flex gap-sm mt-sm">
                                         <button className="btn btn-success" onClick={() => updateStatus(offer.id, 'accepted')}
-                                            style={{ padding: '4px 12px', minHeight: 30, fontSize: '0.72rem' }}>
-                                            <CheckCircle size={13} /> Accept
+                                            style={{ padding: '4px 12px', minHeight: 48, fontSize: '0.8rem', flex: 1 }}>
+                                            <CheckCircle size={14} /> Accept
                                         </button>
                                         <button className="btn btn-danger" onClick={() => updateStatus(offer.id, 'declined')}
-                                            style={{ padding: '4px 12px', minHeight: 30, fontSize: '0.72rem' }}>
-                                            <XCircle size={13} /> Decline
+                                            style={{ padding: '4px 12px', minHeight: 48, fontSize: '0.8rem', flex: 1 }}>
+                                            <XCircle size={14} /> Decline
                                         </button>
                                     </div>
                                 )}
@@ -194,7 +205,7 @@ export default function RecruitmentPortal({ athletes: propAthletes }) {
                                 <Send size={20} color="var(--accent-primary)" /> Send Offer
                             </h3>
                             <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}
-                                style={{ width: 36, height: 36 }}><X size={20} /></button>
+                                style={{ width: 48, height: 48 }}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
@@ -235,18 +246,15 @@ export default function RecruitmentPortal({ athletes: propAthletes }) {
                             <div className="form-group">
                                 <label className="form-label">Personal Message</label>
                                 <textarea className="form-textarea" placeholder="Write a note to the athlete..."
-                                    value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} style={{ minHeight: 80 }} />
+                                    value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} style={{ minHeight: 120 }} />
                             </div>
-                            <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 'var(--space-sm)' }}>
+                            <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 'var(--space-sm)', minHeight: 48 }}>
                                 <Send size={18} /> Send Offer
                             </button>
                         </form>
                     </div>
                 </div>
             )}
-
-            {/* Toast */}
-            {toast && <div className="toast toast-success"><CheckCircle size={16} /> {toast}</div>}
         </div>
     );
 }

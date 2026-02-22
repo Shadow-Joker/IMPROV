@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
-import { MapPin, Users, Trophy, TrendingUp, Zap } from 'lucide-react';
+import { MapPin, Users, Trophy, TrendingUp, Zap, X } from 'lucide-react';
 import { getAllDistricts } from '../../utils/districts';
 import { getRatingTier } from '../../utils/dataShapes';
 import { getAllAthletes } from '../../utils/demoLoader';
+import { useNavigate } from 'react-router-dom';
 
 /* ── hex layout: districts placed in rough TN map shape ── */
 const HEX_LAYOUT = [
@@ -59,7 +60,8 @@ function heatGlow(count, max) {
     return 'none';
 }
 
-export default function TalentHeatMap({ athletes: propAthletes }) {
+export default function TalentHeatMap({ athletes: propAthletes, onDistrictSelect }) {
+    const navigate = useNavigate();
     const [hoveredDistrict, setHovered] = useState(null);
     const [selectedDistrict, setSelected] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -90,6 +92,17 @@ export default function TalentHeatMap({ athletes: propAthletes }) {
         return { stats: s, maxCount: mx };
     }, [athletes, districts]);
 
+    // Sorted districts by count for mobile list view
+    const sortedDistricts = useMemo(() => {
+        return Object.entries(stats)
+            .filter(([, v]) => v.count > 0)
+            .sort((a, b) => b[1].count - a[1].count)
+            .map(([id, data]) => {
+                const dist = districts.find(d => d.id === id);
+                return { id, name: dist?.name || id, nameTamil: dist?.nameTamil || '', ...data };
+            });
+    }, [stats, districts]);
+
     const topSport = (id) => {
         const sp = stats[id]?.sports || {};
         let top = 'N/A', mx = 0;
@@ -101,6 +114,17 @@ export default function TalentHeatMap({ athletes: propAthletes }) {
         setHovered(id);
         const rect = e.currentTarget.closest('svg').getBoundingClientRect();
         setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top - 80 });
+    };
+
+    const handleDistrictClick = (id) => {
+        const newSel = selectedDistrict === id ? null : id;
+        setSelected(newSel);
+
+        // Notify parent for DiscoveryFeed filtering
+        if (onDistrictSelect) {
+            const dist = districts.find(d => d.id === newSel);
+            onDistrictSelect(dist?.name || null);
+        }
     };
 
     const selAthletes = selectedDistrict
@@ -119,12 +143,18 @@ export default function TalentHeatMap({ athletes: propAthletes }) {
     return (
         <div className="animate-fade-in">
             {/* Header */}
-            <div className="flex items-center justify-between mb-md">
+            <div className="flex items-center justify-between mb-md" style={{ flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
                 <h3 className="heading-4 flex items-center gap-sm">
                     <MapPin size={20} color="var(--accent-primary)" />
                     Talent Heat Map — Tamil Nadu
                 </h3>
                 <div className="flex items-center gap-md" style={{ fontSize: '0.7rem' }}>
+                    {selectedDistrict && (
+                        <button className="btn btn-ghost" onClick={() => handleDistrictClick(selectedDistrict)}
+                            style={{ padding: '4px 10px', minHeight: 48, fontSize: '0.72rem' }}>
+                            <X size={12} /> Clear Filter
+                        </button>
+                    )}
                     <span className="flex items-center gap-xs">
                         <span style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(99,102,241,0.35)' }} /> Low
                     </span>
@@ -137,7 +167,8 @@ export default function TalentHeatMap({ athletes: propAthletes }) {
                 </div>
             </div>
 
-            <div className="glass-card" style={{ padding: 'var(--space-md)', overflow: 'auto' }}>
+            {/* ── Desktop: SVG Hex Map ── */}
+            <div className="heatmap-desktop glass-card" style={{ padding: 'var(--space-md)', overflow: 'auto' }}>
                 <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
                     <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ maxWidth: '100%', height: 'auto' }}>
                         {/* Ambient glow background */}
@@ -165,7 +196,7 @@ export default function TalentHeatMap({ athletes: propAthletes }) {
                                 <g key={hex.id}
                                     onMouseEnter={e => handleHover(hex.id, e)}
                                     onMouseLeave={() => setHovered(null)}
-                                    onClick={() => setSelected(selectedDistrict === hex.id ? null : hex.id)}
+                                    onClick={() => handleDistrictClick(hex.id)}
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <polygon
@@ -228,18 +259,87 @@ export default function TalentHeatMap({ athletes: propAthletes }) {
                 </div>
             </div>
 
+            {/* ── Mobile: Simplified List View ── */}
+            <div className="heatmap-mobile" style={{ display: 'none' }}>
+                <div className="glass-card" style={{ padding: 'var(--space-md)' }}>
+                    {sortedDistricts.length === 0 && (
+                        <div className="text-center text-muted" style={{ padding: 'var(--space-lg)' }}>
+                            No athlete data available
+                        </div>
+                    )}
+                    {sortedDistricts.map((d, i) => {
+                        const isSel = selectedDistrict === d.id;
+                        const barWidth = Math.max((d.count / (maxCount || 1)) * 100, 8);
+                        return (
+                            <div key={d.id}
+                                onClick={() => handleDistrictClick(d.id)}
+                                className="animate-slide-up"
+                                style={{
+                                    padding: '12px 14px', cursor: 'pointer',
+                                    borderRadius: 'var(--radius-sm)', marginBottom: 6,
+                                    background: isSel ? 'rgba(99,102,241,0.12)' : 'transparent',
+                                    border: isSel ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+                                    transition: 'all 0.2s',
+                                    animationDelay: `${i * 0.03}s`, opacity: 0,
+                                    minHeight: 48, display: 'flex', alignItems: 'center',
+                                }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div className="flex items-center justify-between mb-xs">
+                                        <div>
+                                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{d.name}</span>
+                                            {d.nameTamil && (
+                                                <span className="tamil text-muted" style={{ fontSize: '0.65rem', marginLeft: 6 }}>
+                                                    {d.nameTamil}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span style={{
+                                            fontFamily: 'var(--font-mono)', fontSize: '0.85rem',
+                                            fontWeight: 700, color: 'var(--accent-secondary)',
+                                        }}>
+                                            {d.count}
+                                        </span>
+                                    </div>
+                                    {/* Mini bar */}
+                                    <div style={{
+                                        height: 4, borderRadius: 2,
+                                        background: 'rgba(255,255,255,0.06)', overflow: 'hidden',
+                                    }}>
+                                        <div style={{
+                                            height: '100%', width: `${barWidth}%`,
+                                            background: heatGradient(d.count, maxCount),
+                                            borderRadius: 2, transition: 'width 0.5s',
+                                        }} />
+                                    </div>
+                                    <div className="text-muted" style={{ fontSize: '0.65rem', marginTop: 3 }}>
+                                        Top: {topSport(d.id)} · Avg: {d.avgRating || '—'}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Selected district athletes */}
             {selectedDistrict && selAthletes.length > 0 && (
                 <div className="glass-card mt-md animate-slide-up" style={{ padding: 'var(--space-md)' }}>
-                    <h4 className="heading-4 mb-sm flex items-center gap-sm">
-                        <TrendingUp size={16} color="var(--accent-secondary)" />
-                        Top Athletes in {selName}
-                    </h4>
+                    <div className="flex items-center justify-between mb-sm">
+                        <h4 className="heading-4 flex items-center gap-sm">
+                            <TrendingUp size={16} color="var(--accent-secondary)" />
+                            Top Athletes in {selName}
+                        </h4>
+                        <button className="btn btn-ghost" onClick={() => handleDistrictClick(selectedDistrict)}
+                            style={{ padding: '4px 10px', minHeight: 48, fontSize: '0.72rem' }}>
+                            <X size={12} /> Clear
+                        </button>
+                    </div>
                     <div className="grid grid-3" style={{ gap: 'var(--space-sm)' }}>
                         {selAthletes.map((a) => {
                             const tier = getRatingTier(a.talentRating);
                             return (
-                                <div key={a.id} className="glass-card" style={{ padding: '12px', cursor: 'pointer', transition: 'all 0.2s' }}
+                                <div key={a.id} className="glass-card" style={{ padding: '12px', cursor: 'pointer', transition: 'all 0.2s', minHeight: 48 }}
+                                    onClick={() => navigate(`/profile/${a.id}`)}
                                     onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                                     onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
                                     <div className="flex items-center gap-sm">
@@ -266,6 +366,8 @@ export default function TalentHeatMap({ athletes: propAthletes }) {
             <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @media (max-width: 768px) {
+          .heatmap-desktop { display: none !important; }
+          .heatmap-mobile { display: block !important; }
           .grid-3 { grid-template-columns: 1fr !important; }
         }
       `}</style>

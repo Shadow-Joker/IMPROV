@@ -3,7 +3,7 @@ import { Filter, X, ChevronDown } from 'lucide-react';
 import { SPORTS, AGE_GROUPS } from '../../utils/dataShapes';
 import { searchDistricts, getAllDistricts } from '../../utils/districts';
 
-export default function SearchFilters({ filters, onChange }) {
+export default function SearchFilters({ filters, onChange, athletes = [], assessments = [] }) {
     const [distQuery, setDistQuery] = useState('');
     const [distOpen, setDistOpen] = useState(false);
     const [collapsed, setCollapse] = useState(false);
@@ -14,6 +14,16 @@ export default function SearchFilters({ filters, onChange }) {
         distQuery.length > 0 ? searchDistricts(distQuery) : getAllDistricts(),
         [distQuery]
     );
+
+    // Extract unique sports from actual athlete data (fallback to SPORTS constant)
+    const availableSports = useMemo(() => {
+        if (athletes.length > 0) {
+            const unique = [...new Set(athletes.map(a => a.sport).filter(Boolean))];
+            // Merge with SPORTS to ensure we have the full list, unique first
+            return [...new Set([...unique, ...SPORTS])];
+        }
+        return SPORTS;
+    }, [athletes]);
 
     const toggleSport = (sport) => {
         const current = filters.sports || [];
@@ -30,20 +40,40 @@ export default function SearchFilters({ filters, onChange }) {
 
     const activeSports = filters.sports || (filters.sport ? [filters.sport] : []);
 
+    // Count active filters for badge
+    const activeFilterCount = [
+        activeSports.length > 0,
+        !!filters.ageGroup,
+        !!filters.gender,
+        !!filters.district,
+        (filters.minRating || 1000) > 1000,
+        !!filters.verifiedOnly,
+    ].filter(Boolean).length;
+
     return (
         <div className="glass-card animate-fade-in" style={{ padding: 'var(--space-md)' }}>
             {/* Header */}
             <div className="flex items-center justify-between mb-md">
                 <h3 className="flex items-center gap-xs" style={{ fontSize: '1rem', fontWeight: 700 }}>
                     <Filter size={17} color="var(--accent-primary)" /> Filters
+                    {activeFilterCount > 0 && (
+                        <span style={{
+                            width: 20, height: 20, borderRadius: '50%',
+                            background: 'var(--accent-primary)', color: 'white',
+                            fontSize: '0.65rem', fontWeight: 800,
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                            {activeFilterCount}
+                        </span>
+                    )}
                 </h3>
                 <div className="flex items-center gap-xs">
                     <button className="btn btn-ghost" onClick={clearAll}
-                        style={{ padding: '2px 8px', minHeight: 'auto', fontSize: '0.7rem' }}>
+                        style={{ padding: '2px 8px', minHeight: 48, fontSize: '0.7rem' }}>
                         <X size={12} /> Clear
                     </button>
                     <button className="btn btn-ghost" onClick={() => setCollapse(!collapsed)}
-                        style={{ padding: '2px 6px', minHeight: 'auto' }}>
+                        style={{ padding: '2px 6px', minHeight: 48 }}>
                         <ChevronDown size={14} style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 0.2s' }} />
                     </button>
                 </div>
@@ -55,8 +85,10 @@ export default function SearchFilters({ filters, onChange }) {
                     <div>
                         <label className="form-label" style={{ fontSize: '0.72rem' }}>SPORT</label>
                         <div className="flex" style={{ flexWrap: 'wrap', gap: 6 }}>
-                            {SPORTS.map(s => {
+                            {availableSports.map(s => {
                                 const active = activeSports.includes(s);
+                                // Count athletes in this sport
+                                const count = athletes.filter(a => a.sport === s).length;
                                 return (
                                     <button key={s} onClick={() => toggleSport(s)}
                                         style={{
@@ -66,9 +98,11 @@ export default function SearchFilters({ filters, onChange }) {
                                             background: active ? 'var(--accent-primary)' : 'transparent',
                                             color: active ? 'white' : 'var(--text-secondary)',
                                             cursor: 'pointer', transition: 'all 0.2s',
-                                            whiteSpace: 'nowrap',
+                                            whiteSpace: 'nowrap', minHeight: 48,
+                                            opacity: count > 0 ? 1 : 0.4,
                                         }}>
                                         {s.replace(/_/g, ' ')}
+                                        {count > 0 && <span style={{ marginLeft: 4, opacity: 0.7, fontSize: '0.65rem' }}>({count})</span>}
                                     </button>
                                 );
                             })}
@@ -82,7 +116,7 @@ export default function SearchFilters({ filters, onChange }) {
                             <button onClick={() => update('ageGroup', '')}
                                 style={{
                                     padding: '5px 10px', fontSize: '0.72rem', fontWeight: 600, borderRadius: 'var(--radius-sm)',
-                                    border: '1px solid', cursor: 'pointer', transition: 'all 0.15s',
+                                    border: '1px solid', cursor: 'pointer', transition: 'all 0.15s', minHeight: 48,
                                     borderColor: !filters.ageGroup ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)',
                                     background: !filters.ageGroup ? 'var(--accent-primary)' : 'transparent',
                                     color: !filters.ageGroup ? 'white' : 'var(--text-secondary)',
@@ -91,7 +125,7 @@ export default function SearchFilters({ filters, onChange }) {
                                 <button key={ag} onClick={() => update('ageGroup', ag)}
                                     style={{
                                         padding: '5px 10px', fontSize: '0.72rem', fontWeight: 600, borderRadius: 'var(--radius-sm)',
-                                        border: '1px solid', cursor: 'pointer', transition: 'all 0.15s',
+                                        border: '1px solid', cursor: 'pointer', transition: 'all 0.15s', minHeight: 48,
                                         borderColor: filters.ageGroup === ag ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)',
                                         background: filters.ageGroup === ag ? 'var(--accent-primary)' : 'transparent',
                                         color: filters.ageGroup === ag ? 'white' : 'var(--text-secondary)',
@@ -108,7 +142,7 @@ export default function SearchFilters({ filters, onChange }) {
                                 <button key={g} onClick={() => update('gender', g)}
                                     style={{
                                         padding: '5px 12px', fontSize: '0.72rem', fontWeight: 600, borderRadius: 'var(--radius-sm)',
-                                        border: '1px solid', cursor: 'pointer', transition: 'all 0.15s', flex: 1,
+                                        border: '1px solid', cursor: 'pointer', transition: 'all 0.15s', flex: 1, minHeight: 48,
                                         borderColor: filters.gender === g ? 'var(--accent-success)' : 'rgba(255,255,255,0.1)',
                                         background: filters.gender === g ? 'rgba(34,197,94,0.15)' : 'transparent',
                                         color: filters.gender === g ? 'var(--accent-success)' : 'var(--text-secondary)',
@@ -123,12 +157,12 @@ export default function SearchFilters({ filters, onChange }) {
                         <input className="form-input" type="text" placeholder="Search districts..."
                             value={distQuery} onChange={e => { setDistQuery(e.target.value); setDistOpen(true); }}
                             onFocus={() => setDistOpen(true)}
-                            style={{ fontSize: '0.8rem', padding: '8px 10px' }} />
+                            style={{ fontSize: '0.8rem', padding: '8px 10px', minHeight: 48 }} />
                         {filters.district && (
                             <div className="flex items-center gap-xs mt-xs">
                                 <span className="badge badge-verified" style={{ fontSize: '0.68rem' }}>{filters.district}</span>
                                 <button onClick={() => { update('district', ''); setDistQuery(''); }}
-                                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}>
+                                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0, minWidth: 48, minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <X size={12} />
                                 </button>
                             </div>
@@ -145,7 +179,8 @@ export default function SearchFilters({ filters, onChange }) {
                                         style={{
                                             padding: '8px 12px', cursor: 'pointer', fontSize: '0.8rem',
                                             borderBottom: '1px solid rgba(255,255,255,0.04)',
-                                            transition: 'background 0.15s',
+                                            transition: 'background 0.15s', minHeight: 48,
+                                            display: 'flex', alignItems: 'center',
                                         }}
                                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.12)'}
                                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -166,23 +201,23 @@ export default function SearchFilters({ filters, onChange }) {
                         </div>
                         <input type="range" min="1000" max="2500" step="50" value={filters.minRating || 1000}
                             onChange={e => update('minRating', parseInt(e.target.value))}
-                            style={{ width: '100%', accentColor: 'var(--accent-primary)', marginTop: 4 }} />
+                            style={{ width: '100%', accentColor: 'var(--accent-primary)', marginTop: 4, minHeight: 48 }} />
                         <div className="flex justify-between" style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
                             <span>1000</span><span>2500</span>
                         </div>
                     </div>
 
                     {/* ── Verified Toggle (iOS-style) ── */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" style={{ minHeight: 48 }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Verified Only</label>
                         <div onClick={() => update('verifiedOnly', !filters.verifiedOnly)}
                             style={{
-                                width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
+                                width: 48, height: 28, borderRadius: 14, cursor: 'pointer',
                                 background: filters.verifiedOnly ? 'var(--accent-success)' : 'rgba(255,255,255,0.12)',
                                 transition: 'background 0.25s', position: 'relative', flexShrink: 0,
                             }}>
                             <div style={{
-                                width: 20, height: 20, borderRadius: '50%', background: 'white',
+                                width: 24, height: 24, borderRadius: '50%', background: 'white',
                                 position: 'absolute', top: 2,
                                 left: filters.verifiedOnly ? 22 : 2,
                                 transition: 'left 0.25s cubic-bezier(.4,0,.2,1)',
@@ -196,7 +231,7 @@ export default function SearchFilters({ filters, onChange }) {
                         <label className="form-label" style={{ fontSize: '0.72rem' }}>SORT BY</label>
                         <select className="form-select" value={filters.sortBy || 'rating_desc'}
                             onChange={e => update('sortBy', e.target.value)}
-                            style={{ fontSize: '0.8rem', padding: '8px 10px' }}>
+                            style={{ fontSize: '0.8rem', padding: '8px 10px', minHeight: 48 }}>
                             <option value="rating_desc">Rating ↓</option>
                             <option value="rating_asc">Rating ↑</option>
                             <option value="mental_desc">Mental Score ↓</option>

@@ -1059,3 +1059,53 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* ---------- 360px Responsive Viewport Rules ---------- */
+@media (max-width: 360px) {
+  html, body {
+    overflow-x: hidden;
+  }
+  
+  .main-content {
+    padding: var(--space-sm);
+  }
+  
+  .glass-card {
+    padding: var(--space-md);
+  }
+  
+  .heading-1 {
+    font-size: 1.8rem;
+  }
+  
+  .heading-2 {
+    font-size: 1.4rem;
+  }
+  
+  .btn {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+  }
+  
+  .grid, .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+  
+  /* Prevent horizontal scroll on mobile tables and flex containers that might overflow */
+  .flex, .flex-row {
+    flex-wrap: wrap;
+  }
+  
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  
+  .form-input, .form-select, .form-textarea {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+}

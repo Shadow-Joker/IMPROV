@@ -1,19 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, Map, Trophy, Radio, Briefcase, TrendingUp, Users, ClipboardCheck, Award, FileText, Download } from 'lucide-react';
 import { getAllAthletes, getAllAssessments } from '../../utils/demoLoader';
+import { toast } from '../shared/Toast';
 import SearchFilters from './SearchFilters';
 import AthleteRanking from './AthleteRanking';
 import TalentHeatMap from './TalentHeatMap';
 import DiscoveryFeed from './DiscoveryFeed';
 import RecruitmentPortal from './RecruitmentPortal';
-
-const TABS = [
-    { id: 'search', label: 'Search', icon: Search },
-    { id: 'heatmap', label: 'Heat Map', icon: Map },
-    { id: 'rankings', label: 'Rankings', icon: Trophy },
-    { id: 'feed', label: 'Feed', icon: Radio },
-    { id: 'recruitment', label: 'Recruit', icon: Briefcase },
-];
 
 /* ── Animated KPI counter ── */
 function AnimKPI({ target, suffix = '', duration = 1400 }) {
@@ -62,20 +55,54 @@ function TickerItem({ text }) {
     );
 }
 
+const TABS = [
+    { id: 'search', label: 'Search', icon: Search },
+    { id: 'heatmap', label: 'Heat Map', icon: Map },
+    { id: 'rankings', label: 'Rankings', icon: Trophy },
+    { id: 'feed', label: 'Feed', icon: Radio },
+    { id: 'recruitment', label: 'Recruit', icon: Briefcase },
+];
+
 export default function ScoutDashboard({ athletes: propAthletes, filters, onFilterChange }) {
     const [activeTab, setActiveTab] = useState('search');
     const [tickerOffset, setTickerOffset] = useState(0);
     const tickerRef = useRef(null);
+    const [districtFilter, setDistrictFilter] = useState(null);
+    const [reportLoading, setReportLoading] = useState(false);
 
+    // Load real data from localStorage via demoLoader
     const athletes = propAthletes?.length ? propAthletes : getAllAthletes();
     const assessments = getAllAssessments();
 
-    // KPI data
-    const totalAthletes = athletes.length;
-    const weekAssessments = assessments.filter(a => Date.now() - (a.timestamp || a.createdAt || 0) < 7 * 86400000).length || assessments.length;
-    const verifiedCount = athletes.filter(a => a.attestations?.length >= 3 || a.syncStatus === 'synced').length;
+    // Shortlist count (from localStorage)
+    const [shortlistCount, setShortlistCount] = useState(0);
+    useEffect(() => {
+        const updateCount = () => {
+            try {
+                const sl = JSON.parse(localStorage.getItem('sentrak_shortlist') || '[]');
+                setShortlistCount(sl.length);
+            } catch { setShortlistCount(0); }
+        };
+        updateCount();
+        // Poll for shortlist changes every 2s
+        const interval = setInterval(updateCount, 2000);
+        return () => clearInterval(interval);
+    }, []);
 
-    // Sparkline data (simulated weekly trend)
+    // KPI data — computed from REAL data
+    const totalAthletes = athletes.length;
+    const weekAssessments = assessments.filter(a => {
+        const ts = a.timestamp || a.createdAt || 0;
+        return Date.now() - ts < 7 * 86400000;
+    }).length || assessments.length;
+
+    const verifiedCount = athletes.filter(a => {
+        const athleteAssessments = assessments.filter(as => as.athleteId === a.id);
+        const totalAttestations = athleteAssessments.reduce((sum, as) => sum + (as.attestations?.length || 0), 0);
+        return totalAttestations >= 3 || a.syncStatus === 'synced';
+    }).length;
+
+    // Sparkline data (weekly trend)
     const sparkData1 = [3, 5, 4, 7, 6, 8, totalAthletes > 6 ? 10 : 5];
     const sparkData2 = [2, 4, 3, 5, 7, 6, weekAssessments > 3 ? 8 : 4];
     const sparkData3 = [1, 2, 2, 3, 3, 4, verifiedCount > 2 ? 5 : 3];
@@ -107,27 +134,54 @@ export default function ScoutDashboard({ athletes: propAthletes, filters, onFilt
         return () => clearInterval(interval);
     }, [tickerItems]);
 
+    // District filter callback from HeatMap
+    const handleDistrictFilter = (districtName) => {
+        setDistrictFilter(districtName);
+        if (districtName) {
+            // Auto-switch to feed tab when filtering by district
+            setActiveTab('feed');
+        }
+    };
+
+    const clearDistrictFilter = () => setDistrictFilter(null);
+
     const handleGenerateReport = () => {
-        const reportData = {
-            generated: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-            totalAthletes, weekAssessments, verifiedCount,
-            topAthletes: athletes.sort((a, b) => (b.talentRating || 0) - (a.talentRating || 0)).slice(0, 10).map(a => ({
-                name: a.name, district: a.district, sport: a.sport, rating: a.talentRating
-            })),
-        };
-        const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `sentrak-report-${Date.now()}.json`; a.click();
-        URL.revokeObjectURL(url);
+        if (reportLoading) return;
+        setReportLoading(true);
+        toast.info('Generating report...');
+
+        setTimeout(() => {
+            const reportData = {
+                generated: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+                totalAthletes, weekAssessments, verifiedCount,
+                topAthletes: [...athletes].sort((a, b) => (b.talentRating || 0) - (a.talentRating || 0)).slice(0, 10).map(a => ({
+                    name: a.name, district: a.district, sport: a.sport, rating: a.talentRating
+                })),
+            };
+            const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `sentrak-report-${Date.now()}.json`; a.click();
+            URL.revokeObjectURL(url);
+            setReportLoading(false);
+            toast.success('Report downloaded!');
+        }, 2000);
     };
 
     const renderTab = () => {
         switch (activeTab) {
             case 'search': return <AthleteRanking athletes={athletes} filters={filters} />;
-            case 'heatmap': return <TalentHeatMap athletes={athletes} />;
+            case 'heatmap': return <TalentHeatMap athletes={athletes} onDistrictSelect={handleDistrictFilter} />;
             case 'rankings': return <AthleteRanking athletes={athletes} filters={filters} />;
-            case 'feed': return <DiscoveryFeed />;
+            case 'feed': return (
+                <DiscoveryFeed
+                    athletes={athletes}
+                    assessments={assessments}
+                    districtFilter={districtFilter}
+                    onClearDistrictFilter={clearDistrictFilter}
+                    filters={filters}
+                />
+            );
             case 'recruitment': return <RecruitmentPortal athletes={athletes} />;
             default: return null;
         }
@@ -175,24 +229,55 @@ export default function ScoutDashboard({ athletes: propAthletes, filters, onFilt
                 })}
             </div>
 
+            {/* ── District Filter Banner ── */}
+            {districtFilter && (
+                <div className="glass-card mb-md animate-slide-up" style={{
+                    padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    borderLeft: '3px solid var(--accent-primary)',
+                }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                        🗺️ Filtering: <span style={{ color: 'var(--accent-secondary)' }}>{districtFilter}</span>
+                    </span>
+                    <button className="btn btn-ghost" onClick={clearDistrictFilter}
+                        style={{ padding: '4px 12px', minHeight: 'auto', fontSize: '0.78rem' }}>
+                        ✕ Clear Filter
+                    </button>
+                </div>
+            )}
+
             {/* ── Tab Navigation ── */}
             <div className="flex items-center justify-between mb-md" style={{ flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
                 <div className="tabs">
                     {TABS.map(tab => {
                         const Icon = tab.icon;
+                        const isRecruit = tab.id === 'recruitment';
                         return (
                             <button key={tab.id} className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-                                onClick={() => setActiveTab(tab.id)}>
+                                onClick={() => setActiveTab(tab.id)}
+                                style={{ position: 'relative', minHeight: 48 }}>
                                 <span className="flex items-center gap-xs">
                                     <Icon size={15} /> {tab.label}
                                 </span>
+                                {/* Shortlist count badge on Recruitment tab */}
+                                {isRecruit && shortlistCount > 0 && (
+                                    <span style={{
+                                        position: 'absolute', top: 2, right: 2,
+                                        width: 18, height: 18, borderRadius: '50%',
+                                        background: 'var(--accent-danger, #ef4444)', color: 'white',
+                                        fontSize: '0.6rem', fontWeight: 800,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        lineHeight: 1,
+                                    }}>
+                                        {shortlistCount > 9 ? '9+' : shortlistCount}
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
                 </div>
-                <button className="btn btn-ghost" onClick={handleGenerateReport}
-                    style={{ padding: '6px 14px', fontSize: '0.78rem', minHeight: 'auto' }}>
-                    <Download size={14} /> Export Report
+                <button className="btn btn-ghost" onClick={handleGenerateReport} disabled={reportLoading}
+                    style={{ padding: '6px 14px', fontSize: '0.78rem', minHeight: 48 }}>
+                    <Download size={14} /> {reportLoading ? 'Generating...' : 'Export Report'}
                 </button>
             </div>
 
@@ -207,7 +292,7 @@ export default function ScoutDashboard({ athletes: propAthletes, filters, onFilt
                         position: 'sticky', top: 80, alignSelf: 'start',
                         maxHeight: 'calc(100vh - 100px)', overflowY: 'auto',
                     }}>
-                        <SearchFilters filters={filters} onChange={onFilterChange} />
+                        <SearchFilters filters={filters} onChange={onFilterChange} athletes={athletes} assessments={assessments} />
                     </aside>
                 )}
                 <main style={{ minWidth: 0 }}>{renderTab()}</main>

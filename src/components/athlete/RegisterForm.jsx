@@ -103,6 +103,7 @@ export default function RegisterForm() {
         village: '',
         photoURL: '',
     });
+    const hasValidName = form.name.trim().length >= 2 || form.nameTamil.trim().length >= 2;
 
     const update = (field, value) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -116,6 +117,15 @@ export default function RegisterForm() {
             setTimeout(() => nameRef.current?.focus(), 300);
         }
     }, [step]);
+
+    useEffect(() => {
+        return () => {
+            stopCamera();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, []);
 
     // Speech synthesis for conversational mode
     const speak = useCallback((text) => {
@@ -191,7 +201,7 @@ export default function RegisterForm() {
         const errors = {};
         switch (stepNum) {
             case 1:
-                if (form.name.trim().length < 2) errors.name = language === 'ta' ? 'பெயர் குறைந்தது 2 எழுத்துகள்' : 'Name must be at least 2 characters';
+                if (!hasValidName) errors.name = language === 'ta' ? 'பெயர் குறைந்தது 2 எழுத்துகள்' : 'Name must be at least 2 characters';
                 break;
             case 2:
                 if (!form.age || parseInt(form.age) < 8 || parseInt(form.age) > 25) errors.age = language === 'ta' ? 'வயது 8-25 இடையே இருக்க வேண்டும்' : 'Age must be between 8 and 25';
@@ -210,7 +220,7 @@ export default function RegisterForm() {
 
     const canProceed = () => {
         switch (step) {
-            case 1: return form.name.trim().length >= 2;
+            case 1: return hasValidName;
             case 2: return form.age && parseInt(form.age) >= 8 && parseInt(form.age) <= 25 && form.gender;
             case 3: return !!form.sport;
             case 4: return !!form.district;
@@ -260,7 +270,7 @@ export default function RegisterForm() {
     const handleSubmit = async () => {
         setSaving(true);
         const athlete = createAthlete({
-            name: form.name.trim(),
+            name: form.name.trim() || form.nameTamil.trim(),
             nameTamil: form.nameTamil.trim(),
             age: parseInt(form.age) || 0,
             gender: form.gender,
@@ -278,11 +288,15 @@ export default function RegisterForm() {
             localStorage.setItem('sentrak_athletes', JSON.stringify(athletes));
             
             // Cloud dual-write
-            await saveAthleteToCloud(athlete);
+            const cloudSaved = await saveAthleteToCloud(athlete);
 
             setNewAthlete(athlete);
             setSubmitted(true);
-            globalToast.success('Athlete registered successfully!');
+            if (cloudSaved) {
+                globalToast.success('Athlete registered successfully!');
+            } else {
+                globalToast.success('Athlete saved offline. Will sync to cloud when online.');
+            }
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             // Auto-navigate after 3 seconds
             setTimeout(() => navigate(`/profile/${athlete.id}`), 3000);
@@ -295,6 +309,9 @@ export default function RegisterForm() {
 
     const voiceLang = language === 'ta' ? 'ta-IN' : 'en-IN';
     const progressPct = (step / TOTAL_STEPS) * 100;
+    const stepHelperText = language === 'ta'
+        ? `படி ${step}/${TOTAL_STEPS} — விவரங்களை நிரப்பி தொடரவும்`
+        : `Step ${step}/${TOTAL_STEPS} — complete details to continue`;
     const filteredDistricts = districtSearch
         ? TN_DISTRICTS.filter(d =>
             d.en.toLowerCase().includes(districtSearch.toLowerCase()) ||
@@ -571,6 +588,11 @@ export default function RegisterForm() {
                                     </button>
                                 ))}
                             </div>
+                            {filteredDistricts.length === 0 && (
+                                <p className="text-secondary" style={{ fontSize: '0.85rem', marginTop: '8px' }}>
+                                    {language === 'ta' ? 'மாவட்டம் கிடைக்கவில்லை. வேறு தேடல் சொல்லை முயற்சிக்கவும்.' : 'No district found. Try a different search term.'}
+                                </p>
+                            )}
                             {validationErrors.district && <p className="validation-error">{validationErrors.district}</p>}
                         </div>
                         <VoiceInput
@@ -792,6 +814,11 @@ export default function RegisterForm() {
                 </div>
             </div>
 
+            <div className="glass-card-static" style={{ marginBottom: 'var(--space-md)', padding: '10px 14px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <span className="badge badge-pending" style={{ marginRight: '8px' }}>{step}/{TOTAL_STEPS}</span>
+                {stepHelperText}
+            </div>
+
             {/* Step content */}
             <div className="glass-card-static" style={{ marginBottom: 'var(--space-lg)', overflow: 'hidden' }}>
                 {renderStep()}
@@ -812,6 +839,7 @@ export default function RegisterForm() {
                         className="btn btn-primary"
                         onClick={handleNext}
                         disabled={!canProceed()}
+                        title={!canProceed() ? (language === 'ta' ? 'தொடர தேவையான விவரங்களை நிரப்பவும்' : 'Please complete required fields to continue') : ''}
                         style={{ opacity: canProceed() ? 1 : 0.5, transition: 'opacity 0.2s ease' }}
                     >
                         {t('next', language)} <ChevronRight size={18} />
